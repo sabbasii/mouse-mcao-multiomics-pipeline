@@ -216,3 +216,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# macOS metadata
+.DS_Store
+**/.DS_Store
+
+# Microarray raw and vendor-processed data
+*.CEL
+*.cel
+*.ARR
+*.arr
+*.chp
+*.CHP
