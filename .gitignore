@@ -217,6 +217,10 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# Project data and generated analysis outputs
+data/
+results/
+
 # macOS metadata
 .DS_Store
 **/.DS_Store
