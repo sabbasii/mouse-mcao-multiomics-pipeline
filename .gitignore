@@ -217,6 +217,9 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# Local AI-agent instructions
+AGENTS.md
+
 # Project data and generated analysis outputs
 data/
 results/
