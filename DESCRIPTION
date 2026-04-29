@@ -1,0 +1,15 @@
+Package: mirna.microarray.pipeline
+Title: miRNA Microarray Pipeline
+Version: 0.0.0.9000
+Description: Project-local dependency manifest for the miRNA microarray analysis pipeline.
+License: MIT
+Encoding: UTF-8
+Imports:
+    BiocManager,
+    Biobase,
+    oligo,
+    oligoClasses,
+    pdInfoBuilder,
+    affxparser,
+    remotes,
+    pd.mirna.4.1
