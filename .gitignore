@@ -227,6 +227,9 @@ results/
 # Local vendor library files
 resources/affymetrix_library_files/
 
+# Local archived old scripts not intended for GitHub
+archive/old_scripts/Microarray Scripts_AB/
+
 # macOS metadata
 .DS_Store
 **/.DS_Store
