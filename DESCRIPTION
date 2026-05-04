@@ -11,5 +11,6 @@ Imports:
     oligoClasses,
     pdInfoBuilder,
     affxparser,
+    limma,
     remotes,
     pd.mirna.4.1
