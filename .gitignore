@@ -226,9 +226,20 @@ results/
 
 # Local vendor library files
 resources/affymetrix_library_files/
+resources/mirna_target_databases/
+resources/pathway_gene_sets/
 
 # Local archived old scripts not intended for GitHub
 archive/old_scripts/Microarray Scripts_AB/
+
+# Local original/reference documents
+archive/source_materials/
+
+# Local project-specific notes and findings
+docs/project_notes/
+
+# Local temporary analysis artifacts
+temp_folder/
 
 # macOS metadata
 .DS_Store
