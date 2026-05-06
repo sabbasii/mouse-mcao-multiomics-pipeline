@@ -9,9 +9,9 @@ metadata_file <- file.path(
   "Animal-Tracking-Sheet-RNA-R-miRNA.csv"
 )
 cel_dir <- file.path("data", "raw", "mirna_150001", "CEL Files")
-output_dir <- file.path("results", "sample_sheet")
-sample_sheet_file <- file.path(output_dir, "sample_sheet_mirna_150001.csv")
-summary_file <- file.path(output_dir, "sample_matching_summary_mirna_150001.txt")
+output_dir <- file.path("results", "mirna", "sample_sheet")
+sample_sheet_file <- file.path(output_dir, "sample_sheet_mirna.csv")
+summary_file <- file.path(output_dir, "sample_matching_summary_mirna.txt")
 
 required_columns <- c("File Name", "Animal ID", "Sex", "Age", "Treatment")
 
