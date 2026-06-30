@@ -5,8 +5,14 @@ Description: Project-local dependency manifest for the miRNA microarray analysis
 License: MIT
 Encoding: UTF-8
 Imports:
+    AnnotationDbi,
     BiocManager,
+    BiocParallel,
     Biobase,
+    clariomsmousehttranscriptcluster.db,
+    data.table,
+    fgsea,
+    ggplot2,
     oligo,
     oligoClasses,
     pdInfoBuilder,
@@ -14,3 +20,6 @@ Imports:
     limma,
     remotes,
     pd.mirna.4.1
+Suggests:
+    knitr,
+    rmarkdown
