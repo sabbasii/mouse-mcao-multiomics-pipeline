@@ -224,6 +224,9 @@ AGENTS.md
 data/
 results/
 
+# Local metadata and sample-tracking files
+metadata/*
+
 # Local vendor library files
 resources/affymetrix_library_files/
 resources/mirna_target_databases/
@@ -241,9 +244,28 @@ docs/project_notes/
 # Local temporary analysis artifacts
 temp_folder/
 
+# Quarto notebooks and private manuscript materials
+notebooks/.quarto/
+notebooks/**/*.quarto_ipynb
+notebooks/*_files/
+notebooks/manuscript_prep.qmd
+notebooks/manuscript_prep.docx
+notebooks/manuscript_prep.html
+notebooks/manuscript_prep.pdf
+notebooks/manuscript_prep_files/
+notebooks/manuscript/
+notebooks/microarray_analysis_pipeline_local.qmd
+notebooks/microarray_analysis_pipeline_local.html
+notebooks/microarray_analysis_pipeline_local_files/
+
 # macOS metadata
 .DS_Store
 **/.DS_Store
+
+# R session history and generated plots
+*.Rhistory
+*.RData
+Rplots.pdf
 
 # Microarray raw and vendor-processed data
 *.CEL
