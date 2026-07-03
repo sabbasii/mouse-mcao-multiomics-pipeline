@@ -8,10 +8,13 @@ format:
     smooth-scroll: true
     code-fold: false
     embed-resources: true
+    grid:
+      body-width: 1100px
 execute:
-  echo: true
-  warning: true
-  message: true
+  eval: false
+  warning: false
+  message: false
+  results: markup
 ---
 
 <style>
@@ -51,6 +54,17 @@ pre.sourceCode {
   border-left: 4px solid #7aa9c2;
   border-radius: 5px;
 }
+.centered-workflow pre {
+  text-align: center;
+  white-space: pre-wrap;
+  background-color: #eef7fc;
+  border: 1px solid #9cc7df;
+  border-radius: 8px;
+  padding: 1.25rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.7;
+}
 .workflow-box,
 .purpose-box,
 .expected-box {
@@ -67,6 +81,15 @@ pre.sourceCode {
 .purpose-box {
   border-left: 7px solid #7aa9c2;
   background: #f1f7fa;
+}
+.integration-question-label {
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.script-name {
+  color: #000;
+  font-weight: 700;
 }
 .expected-box {
   border-left: 7px solid #d39a3a;
@@ -112,6 +135,7 @@ hr.section-divider {
    - [Review miRNA raw-intensity boxplots](#review-mirna-raw-intensity-boxplots)
    - [Review miRNA raw-intensity density curves](#review-mirna-raw-intensity-density-curves)
    - [Record the miRNA normalization limitation and expression source](#record-the-mirna-normalization-limitation-and-expression-source)
+   - [Run the reproducible miRNA preparation scripts](#run-the-reproducible-mirna-preparation-scripts)
 4. [Clariom S/mRNA sample preparation and normalization](#clariom-smrna-sample-preparation-and-normalization)
    - [Build and validate the mRNA sample sheet](#build-and-validate-the-mrna-sample-sheet)
    - [Read, inspect, and RMA-normalize the mRNA CEL files](#read-inspect-and-rma-normalize-the-mrna-cel-files)
@@ -124,7 +148,7 @@ hr.section-divider {
    - [Measure transcript-cluster mapping coverage](#measure-transcript-cluster-mapping-coverage)
    - [Build the validated annotation table](#build-the-validated-annotation-table)
    - [Prepare the primary analysis-ready mRNA dataset](#prepare-the-primary-analysis-ready-mrna-dataset)
-6. [Analysis-ready mRNA sample quality control](#analysis-ready-mrna-sample-quality-control)
+6. [mRNA sample quality control](#mrna-sample-quality-control)
    - [Run sample-level quality control](#run-sample-level-quality-control)
    - [Review the quality-control outputs](#review-the-quality-control-outputs)
 7. [Build the paired miRNA–mRNA sample manifest](#build-the-paired-mirnamrna-sample-manifest)
@@ -164,37 +188,37 @@ platforms, platform-design packages, and expression-feature identifiers.
 
 The documented workflow proceeds in this order:
 
+::: {.centered-workflow}
+
 ```text
 Set up the project environment
-    ↓
+↓
 Inspect and match miRNA inputs
-    ↓
+↓
 Document the usable miRNA expression source
-    ↓
+↓
 Build and validate the mRNA sample sheet
-    ↓
+↓
 Read, QC, and RMA-normalize the mRNA CEL files
-    ↓
+↓
 Annotate mRNA transcript clusters with biological gene identifiers
-    ↓
+↓
 Prepare the uniquely gene-mapped mRNA matrix
-    ↓
+↓
 Run sample-level QC on the analysis-ready mRNA matrix
-    ↓
+↓
 Match miRNA and mRNA samples by animal ID
-    ↓
+↓
 Freeze the paired analysis manifest
-    ↓
+↓
 Run exploratory paired-cohort differential expression (DE)
-    ↓
+↓
 Match external target evidence to exact measured features
-    ↓
+↓
 Create one row per measured miRNA–mRNA pair and contrast
 ```
 
-Heavy or result-generating chunks are executable but use `eval: false` so that
-rendering the notebook does not silently rerun analyses. Validation chunks read
-the saved outputs and report their expected or observed results.
+:::
 
 <hr class="section-divider">
 
@@ -204,6 +228,9 @@ the saved outputs and report their expected or observed results.
 
 This code allows the notebook to run from either the repository root or the
 `notebooks/` directory. All later paths are constructed from `project_root`.
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: locate-project
@@ -219,6 +246,9 @@ project_root <- if (file.exists("DESCRIPTION")) {
 project_root
 ```
 
+
+:::
+
 **Expected outcome:** the absolute path ending in
 `mirna-microarray-pipeline`.
 
@@ -226,6 +256,9 @@ project_root
 
 The project uses `renv` to restore and activate its R package environment. This
 chunk loads that environment and checks the packages required by the workflow.
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: load-packages
@@ -259,6 +292,9 @@ if (!all(workflow_package_available)) {
 }
 ```
 
+
+:::
+
 **Expected outcome:** every required package check is `TRUE`.
 
 <hr class="section-divider">
@@ -266,6 +302,9 @@ if (!all(workflow_package_available)) {
 # miRNA input inspection and expression-source decision
 
 ## Inventory the raw miRNA CEL files
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: list-cel-files
@@ -288,12 +327,18 @@ length(mirna_cel_files)
 head(mirna_cel_names)
 ```
 
+
+:::
+
 **Expected outcome:** one CEL file per expected array. A filename such as
 `5505014461569112923888_A05_499422-50.CEL` contains an array prefix, an array
 position, and a sample identifier. Matching below uses the complete filename,
 not parsed filename components.
 
 ## Read the miRNA sample metadata
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: read-metadata
@@ -314,10 +359,16 @@ names(mirna_metadata)
 head(mirna_metadata)
 ```
 
+
+:::
+
 **Expected outcome:** one metadata row per expected array and columns including
 `File Name`, `Animal ID`, `Sex`, `Age`, and `Treatment`.
 
 ## Confirm exact miRNA CEL-to-metadata matching
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: match-cel-metadata
@@ -344,6 +395,9 @@ stopifnot(
 )
 ```
 
+
+:::
+
 **Expected outcome:** every CEL filename matches one metadata row, with no
 missing, extra, or duplicated filenames.
 
@@ -353,17 +407,36 @@ Each biological sample was hybridized to one physical array, producing one CEL
 file. Consequently, the number of biological samples should equal the number
 of biological arrays.
 
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
+
 ```{r}
 #| label: read-cel-files
+#| echo: true
+#| message: false
+#| warning: false
 
-mirna_raw_cel <- oligo::read.celfiles(mirna_cel_files)
+invisible(capture.output(
+  mirna_raw_cel <- suppressMessages(
+    suppressWarnings(
+      oligo::read.celfiles(mirna_cel_files)
+    )
+  )
+))
+
 mirna_raw_cel
 ```
+
+
+:::
 
 **Expected outcome:** an `ExpressionFeatureSet` containing every input array
 and annotated with `pd.mirna.4.1`.
 
 ## Validate miRNA raw intensities
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: validate-intensities
@@ -375,11 +448,17 @@ table(is.finite(mirna_raw_intensities))
 summary(as.vector(mirna_raw_intensities))
 ```
 
+
+:::
+
 **Expected outcome:** a complete raw-intensity matrix with finite values, no
 `NA` or `NaN` values, and the right-skewed distribution expected from
 microarray probe intensities.
 
 ## Review miRNA raw-intensity boxplots
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: raw-intensity-boxplots
@@ -397,11 +476,17 @@ boxplot(
 )
 ```
 
+
+:::
+
 **Expected outcome:** broadly similar distributions with modest differences
 between array medians and no visually extreme global-intensity outlier. This is
 reassuring but is not sufficient by itself to declare every array high quality.
 
 ## Review miRNA raw-intensity density curves
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: raw-intensity-densities
@@ -417,6 +502,9 @@ limma::plotDensities(
 )
 ```
 
+
+:::
+
 **Expected outcome:** most curves overlap around the main peak. Differences in
 peak shape and position indicate technical variation that would normally be
 addressed through normalization and assessed with further QC. The long right
@@ -431,19 +519,156 @@ expression source and record the selected method in the analysis outputs.
 **Expected outcome:** one validated miRNA expression source is selected before
 annotation, QC, or DE.
 
+## Run the reproducible miRNA preparation scripts
+
+The tracked miRNA preparation scripts are listed below in numerical order.
+There is no miRNA <span class="script-name">Script 01</span> in the current `scripts/mirna/` directory.
+<span class="script-name">miRNA Script 05</span> is documented later because
+it requires the paired-animal manifest.
+
+### miRNA <span class="script-name">Script 00</span> — Build the sample sheet
+
+<span class="script-name">miRNA Script 00</span>:
+`scripts/mirna/00_build_sample_sheet.R`
+
+This script matches the raw miRNA CEL filenames to the primary miRNA metadata
+and records the validated sample information.
+
+**Command:** `Rscript scripts/mirna/00_build_sample_sheet.R`
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### miRNA <span class="script-name">Script 00</span> outputs {.unnumbered .unlisted}
+
+**Output directory:** `results/mirna/sample_sheet/`
+
+- **Output:** `sample_sheet_mirna.csv`<br>
+  ↳ Validated miRNA sample metadata and exact CEL-file matches.
+
+- **Output:** `sample_matching_summary_mirna.txt`<br>
+  ↳ Match counts, treatment and demographic summaries, and validation checks.
+
+:::
+
+### miRNA <span class="script-name">Script 02</span> — Prepare an expression dataset
+
+<span class="script-name">miRNA Script 02</span>:
+`scripts/mirna/02_prepare_expression_mirna.R`
+
+This script prepares one selected expression source: `vendor_chp`,
+`complete_rma_excluding_two`, or `rma_normalized_mirna`.
+
+**Command:** `Rscript scripts/mirna/02_prepare_expression_mirna.R <dataset>`
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### miRNA <span class="script-name">Script 02</span> outputs {.unnumbered .unlisted}
+
+**Output directory:** `results/mirna/expression/<dataset>/`
+
+- **Output:** `expression_matrix_mirna.csv`<br>
+  ↳ Prepared miRNA expression values for the selected dataset.
+
+- **Output:** `normalization_summary_mirna.txt`<br>
+  ↳ Dataset source, dimensions, exclusions, and finite-value checks.
+
+- **Vendor-CHP outputs:** `dabg_pvalues_mirna.csv`,
+  `probe_annotation_mirna.csv`, and `analysis_samples_mirna.csv`<br>
+  ↳ Detection p-values, vendor probe annotation, and retained sample metadata.
+
+- **CEL-RMA output:** `expression_set_mirna.rds`<br>
+  ↳ Saved normalized Bioconductor expression object. The
+  `complete_rma_excluding_two` dataset also records
+  `excluded_arrays_mirna.csv`.
+
+:::
+
+### miRNA <span class="script-name">Script 03</span> — Run sample quality control
+
+<span class="script-name">miRNA Script 03</span>:
+`scripts/mirna/03_sample_qc_mirna.R`
+
+This script evaluates one prepared miRNA dataset using expression
+distributions, PCA, clustering, detection metrics, and review-only outlier
+flags.
+
+**Command:** `Rscript scripts/mirna/03_sample_qc_mirna.R <dataset>`
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### miRNA <span class="script-name">Script 03</span> outputs {.unnumbered .unlisted}
+
+**Output directory:** `results/mirna/qc/<dataset>/sample_qc/`
+
+- **Output:** `expression_boxplot_mirna.png` and
+  `expression_density_mirna.png`<br>
+  ↳ Sample-level expression distributions.
+
+- **Output:** `pca_by_treatment_mirna.png`, `pca_by_age_mirna.png`,
+  `pca_by_sex_mirna.png`, and `pca_by_array_prefix_mirna.png`<br>
+  ↳ PCA views labelled by biological and technical variables.
+
+- **Output:** `sample_clustering_mirna.png`<br>
+  ↳ Unsupervised hierarchical clustering of samples.
+
+- **Output:** `pca_scores_mirna.csv`, `sample_qc_metrics_mirna.csv`, and
+  `possible_outliers_mirna.csv`<br>
+  ↳ PCA coordinates, per-sample QC measurements, and review-only flags.
+
+- **Output:** `sample_qc_summary_mirna.txt`<br>
+  ↳ Dataset dimensions, finite-value checks, explained variance, and flagged
+  sample counts.
+
+:::
+
+### miRNA <span class="script-name">Script 04</span> — Annotate and filter measured miRNAs
+
+<span class="script-name">miRNA Script 04</span>:
+`scripts/mirna/04_annotate_expression_mirna.R`
+
+This script matches measured probesets to the Thermo miRNA annotation and
+retains mature *Mus musculus* miRNA features for DE.
+
+**Command:** `Rscript scripts/mirna/04_annotate_expression_mirna.R <dataset>`
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### miRNA <span class="script-name">Script 04</span> outputs {.unnumbered .unlisted}
+
+**Output directory:** `results/mirna/expression/<dataset>/annotation/`
+
+- **Output:** `matched_probeset_annotation_mirna.csv`<br>
+  ↳ Thermo annotation matched to measured expression probesets.
+
+- **Output:** `mouse_mature_mirna_annotation_mirna.csv`<br>
+  ↳ Annotation for retained mature mouse miRNA probesets.
+
+- **Output:** `mouse_mature_mirna_expression_mirna.csv`<br>
+  ↳ DE-ready expression matrix containing the retained miRNA features.
+
+- **Output:** `annotation_summary_mirna.txt`<br>
+  ↳ Annotation release, matching counts, filtering rules, and retained
+  dimensions.
+
+:::
+
 <hr class="section-divider">
 
 # Clariom S/mRNA sample preparation and normalization
 
 The Clariom S experiment is analyzed separately from the miRNA experiment. Its
-raw data are under `data/raw/clariomS_150002/`, and its generated outputs are
-under `results/mrna/`.
+main directories are:
+
+- **Input directory:** `data/raw/clariomS_150002/`
+- **Output directory:** `results/mrna/`
 
 ## Build and validate the mRNA sample sheet
 
-The first mRNA script inventories the CEL files, extracts the animal ID at the
-start of each filename, and matches it exactly to the `Animal ID` column in
+<span class="script-name">mRNA Script 00</span>:
+`scripts/mrna/00_build_sample_sheet_mrna.R`
+
+This script inventories the CEL files, extracts the animal ID at the start of
+each filename, and matches it exactly to the `Animal ID` column in
 `metadata/Animal-Tracking-Sheet-RNA-Animal-ID.csv`.
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: run-mrna-sample-sheet
@@ -454,18 +679,32 @@ system2(
   file.path(
     project_root,
     "scripts/mrna/00_build_sample_sheet_mrna.R"
-  )
+  ),
+  stdout = FALSE
 )
 ```
 
-This cell is executable manually. Automatic evaluation is disabled so that
-rendering the notebook does not overwrite timestamped result summaries.
 
-The script writes:
+:::
 
-- `results/mrna/sample_sheet/sample_sheet_mrna_150002.csv`
-- `results/mrna/sample_sheet/metadata_without_cel_mrna_150002.csv`
-- `results/mrna/sample_sheet/sample_matching_summary_mrna_150002.txt`
+::: {.callout-note collapse="true" appearance="minimal"}
+### mRNA <span class="script-name">Script 00</span> outputs {.unnumbered .unlisted}
+
+**Output directory:** `results/mrna/sample_sheet/`
+
+- **Output:** `sample_sheet_mrna_150002.csv`<br>
+  ↳ Validated CEL-to-metadata matches for the mRNA experiment.
+
+- **Output:** `metadata_without_cel_mrna_150002.csv`<br>
+  ↳ Metadata rows that do not have a matching CEL file.
+
+- **Output:** `sample_matching_summary_mrna_150002.txt`<br>
+  ↳ Matching counts, treatment summaries, exclusions, and validation checks.
+
+:::
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: inspect-mrna-sample-sheet
@@ -495,6 +734,9 @@ table(
 cat(readLines(mrna_matching_summary_file), sep = "\n")
 ```
 
+
+:::
+
 **Expected outcome:** every biological CEL file matches one metadata row,
 control arrays are identified, and matched filenames and animal IDs are
 unique.
@@ -505,9 +747,15 @@ miRNA, and paired-manifest workflows.
 
 ## Read, inspect, and RMA-normalize the mRNA CEL files
 
-The second script reads all CEL files, verifies the raw intensities, creates
-raw QC plots, runs RMA, validates the normalized expression matrix, and saves
-the normalized data and post-RMA QC plots.
+<span class="script-name">mRNA Script 01</span>:
+`scripts/mrna/01_array_qc_normalize_mrna.R`
+
+This script reads all CEL files, verifies the raw intensities, creates raw QC
+plots, runs RMA, validates the normalized expression matrix, and saves the
+normalized data and post-RMA QC plots.
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: run-mrna-cel-rma
@@ -518,17 +766,50 @@ system2(
   file.path(
     project_root,
     "scripts/mrna/01_array_qc_normalize_mrna.R"
-  )
+  ),
+  stdout = FALSE
 )
 ```
 
-This heavy cell is executable manually. Automatic evaluation is disabled
-because it reads the CEL files and reruns RMA.
+
+:::
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### mRNA <span class="script-name">Script 01</span> outputs {.unnumbered .unlisted}
+
+**Normalized-output directory:** `results/mrna/normalized/`
+
+- **Output:** `rma_expression_mrna_150002.csv`<br>
+  ↳ RMA-normalized transcript-cluster expression matrix.
+
+- **Output:** `rma_expression_set_mrna_150002.rds`<br>
+  ↳ Saved Bioconductor expression object.
+
+**QC-output directory:** `results/mrna/qc/cel_rma/`
+
+- **Output:** `raw_cel_intensity_boxplot_mrna_150002.png` and
+  `raw_cel_intensity_density_mrna_150002.png`<br>
+  ↳ Raw CEL intensity distributions.
+
+- **Output:** `rma_expression_boxplot_mrna_150002.png` and
+  `rma_expression_density_mrna_150002.png`<br>
+  ↳ RMA-normalized expression distributions.
+
+- **Output:** `cel_rma_sample_metrics_mrna_150002.csv`<br>
+  ↳ Per-array raw and normalized expression summaries.
+
+- **Output:** `cel_rma_summary_mrna_150002.txt`<br>
+  ↳ Platform, dimensions, finite-value checks, and saved output paths.
+
+:::
 
 **Expected outcome:** the CEL headers resolve to the
 `pd.clariom.s.mouse.ht` platform-design package.
 
 ## Validate the saved mRNA RMA output
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: validate-mrna-rma-output
@@ -551,11 +832,17 @@ summary(as.vector(mrna_rma_matrix))
 cat(readLines(mrna_rma_summary_file), sep = "\n")
 ```
 
+
+:::
+
 **Expected outcome:** the saved RMA matrix contains every normalized array,
 uses transcript-cluster row identifiers, and contains no `NA`, `NaN`, or
 infinite expression values.
 
 ## Review the mRNA CEL and RMA figures
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: display-mrna-qc-figures
@@ -585,6 +872,9 @@ stopifnot(all(file.exists(mrna_qc_figures)))
 knitr::include_graphics(mrna_qc_figures)
 ```
 
+
+:::
+
 **Expected outcome:** raw arrays may show technical variation, whereas
 RMA-normalized biological arrays should have broadly comparable expression
 distributions. Control arrays remain identified and are excluded from
@@ -605,25 +895,29 @@ annotation package.
 
 ## Annotation workflow and expected outputs
 
-```text
-RMA expression matrix
-results/mrna/normalized/rma_expression_mrna_150002.csv
-    ↓
-Install and record clariomsmousehttranscriptcluster.db
-    ↓
-Inspect supported keys and biological annotation fields
-    ↓
-Map transcript_cluster_id values and measure mapping coverage
-    ↓
-Write validated annotation and annotated expression outputs
-results/mrna/annotation/
-    ↓
-Keep biological samples and uniquely gene-mapped transcript clusters
-results/mrna/analysis_ready/
-```
+**Input**
 
-The preceding RMA validation already checks matrix dimensions and finite
-expression values, so those checks are not repeated here.
+- **RMA expression matrix:** `results/mrna/normalized/rma_expression_mrna_150002.csv`
+
+**Steps**
+
+1. **Install and record** `clariomsmousehttranscriptcluster.db`.
+
+2. **Inspect** the supported keys and biological annotation fields.
+
+3. **Map** the `transcript_cluster_id` values and measure annotation coverage.
+
+4. **Write** the validated annotation and annotated expression outputs.
+
+   - **Output directory:** `results/mrna/annotation/`
+
+5. **Keep** the biological samples and uniquely gene-mapped transcript
+   clusters.
+
+   - **Output directory:** `results/mrna/analysis_ready/`
+
+The RMA matrix dimensions and finite expression values were validated in the
+preceding step, so those checks are not repeated here.
 
 ## Install the biological annotation package
 
@@ -632,6 +926,9 @@ mapping from Clariom S Mouse HT transcript-cluster IDs to gene symbols, Entrez
 IDs, gene names, and other identifiers. It complements
 `pd.clariom.s.mouse.ht`, which was used for RMA normalization but does not
 provide the gene-level interpretation required downstream.
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: install-mrna-biological-annotation-package
@@ -653,6 +950,9 @@ renv::record(
 )
 ```
 
+
+:::
+
 Automatic evaluation is disabled because package installation changes the
 project environment. Run this cell once manually.
 
@@ -665,6 +965,9 @@ Before mapping the expression matrix, inspect the database object to confirm
 its organism, platform, valid join key, and available biological fields. The
 mRNA matrix identifier `transcript_cluster_id` will be matched to the database
 key type `PROBEID`.
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: inspect-mrna-biological-annotation
@@ -694,6 +997,9 @@ mrna_required_annotation_columns %in%
   AnnotationDbi::columns(mrna_annotation_db)
 ```
 
+
+:::
+
 **Expected outcome:**
 
 - the object is a `ChipDb` biological annotation database;
@@ -713,6 +1019,9 @@ compares the existing RMA row names with `PROBEID`, measures annotation
 coverage, and flags one-to-many gene mappings that must not be silently
 collapsed.
 
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
+
 ```{r}
 #| label: measure-mrna-annotation-coverage
 
@@ -731,11 +1040,13 @@ mrna_unmatched_probe_ids <- setdiff(
   mrna_database_probe_ids
 )
 
-mrna_annotation_preview <- AnnotationDbi::select(
-  mrna_annotation_db,
-  keys = mrna_matched_probe_ids,
-  keytype = "PROBEID",
-  columns = c("SYMBOL", "ENTREZID")
+mrna_annotation_preview <- suppressMessages(
+  AnnotationDbi::select(
+    mrna_annotation_db,
+    keys = mrna_matched_probe_ids,
+    keytype = "PROBEID",
+    columns = c("SYMBOL", "ENTREZID")
+  )
 )
 
 mrna_symbols_per_probe <- tapply(
@@ -758,16 +1069,25 @@ mrna_mapping_summary <- c(
 mrna_mapping_summary
 ```
 
+
+:::
+
 **Expected outcome:** most transcript-cluster IDs match the platform database,
 expression IDs are unique, and unmatched or one-to-many mappings are counted
 explicitly before filtering.
 
 ## Build the validated annotation table
 
+<span class="script-name">mRNA Script 02</span>:
+`scripts/mrna/02_annotate_transcript_clusters_mrna.R`
+
 This step creates the reusable transcript-cluster-to-gene annotation. The
 script joins `transcript_cluster_id` to `PROBEID`, retains unmatched features
 with an explicit status, and writes one row per gene mapping so that
 one-to-many relationships are not silently reduced to the first match.
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: build-mrna-transcript-cluster-annotation
@@ -778,16 +1098,29 @@ system2(
   file.path(
     project_root,
     "scripts/mrna/02_annotate_transcript_clusters_mrna.R"
-  )
+  ),
+  stdout = FALSE
 )
 ```
 
-Automatic evaluation is disabled because the script writes result files. It
-creates:
 
-- `results/mrna/annotation/transcript_cluster_gene_annotation_mrna_150002.csv`
-- `results/mrna/annotation/unmatched_transcript_clusters_mrna_150002.csv`
-- `results/mrna/annotation/transcript_cluster_annotation_summary_mrna_150002.txt`
+:::
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### mRNA <span class="script-name">Script 02</span> outputs {.unnumbered .unlisted}
+
+**Output directory:** `results/mrna/annotation/`
+
+- **Output:** `transcript_cluster_gene_annotation_mrna_150002.csv`<br>
+  ↳ Long-format biological annotation for every expression transcript cluster.
+
+- **Output:** `unmatched_transcript_clusters_mrna_150002.csv`<br>
+  ↳ Transcript clusters without a supported biological annotation match.
+
+- **Output:** `transcript_cluster_annotation_summary_mrna_150002.txt`<br>
+  ↳ Mapping coverage, mapping categories, and validation checks.
+
+:::
 
 **Expected outcome:** every expression transcript cluster is represented in
 the long-format table, unmatched features remain identifiable, one-to-many
@@ -795,6 +1128,9 @@ gene mappings are preserved, and no exact duplicate annotation rows are
 created.
 
 ## Prepare the primary analysis-ready mRNA dataset
+
+<span class="script-name">mRNA Script 03</span>:
+`scripts/mrna/03_prepare_analysis_ready_mrna.R`
 
 The normalized RMA matrix still contains two control arrays and several feature
 types that should not enter the primary gene-level analysis. This step creates
@@ -812,6 +1148,9 @@ The retained expression rows and annotation rows are written in the same order.
 This makes it possible to join them directly by `transcript_cluster_id` and
 prevents an expression profile from being assigned to the wrong gene.
 
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
+
 ```{r}
 #| label: prepare-analysis-ready-mrna
 #| eval: false
@@ -821,23 +1160,40 @@ system2(
   file.path(
     project_root,
     "scripts/mrna/03_prepare_analysis_ready_mrna.R"
-  )
+  ),
+  stdout = FALSE
 )
 ```
 
-Automatic evaluation is disabled because the script writes result files.
 
-The script creates the following outputs:
+:::
 
-| Output | Contents |
-|---|---|
-| <span class="downstream-file">`expression_matrix_unique_gene_mapped_mrna.csv`</span> | RMA expression for retained transcript clusters across the biological samples. The first column is `transcript_cluster_id`. |
-| <span class="downstream-file">`transcript_cluster_annotation_unique_gene_mapped_mrna.csv`</span> | One annotation row per retained transcript cluster, with Entrez ID, symbol, gene name, gene type, and Ensembl ID. |
-| <span class="downstream-file">`analysis_samples_mrna.csv`</span> | Metadata for the biological samples represented by the expression columns, including animal ID, sex, age, treatment, and CEL filename. |
-| `transcript_cluster_filter_report_mrna.csv` | Every original transcript cluster, whether it was retained, and the reason for any exclusion. |
-| `analysis_ready_summary_mrna.txt` | Input paths, filtering rules, retained and excluded counts, matrix dimensions, and validation checks. |
+::: {.callout-note collapse="true" appearance="minimal"}
+### mRNA <span class="script-name">Script 03</span> outputs {.unnumbered .unlisted}
 
-All five files are written under `results/mrna/analysis_ready/`.
+**Output directory:** `results/mrna/analysis_ready/`
+
+- **Output:** <span class="downstream-file">`expression_matrix_unique_gene_mapped_mrna.csv`</span><br>
+  ↳ RMA expression for retained transcript clusters across the biological
+  samples. The first column is `transcript_cluster_id`.
+
+- **Output:** <span class="downstream-file">`transcript_cluster_annotation_unique_gene_mapped_mrna.csv`</span><br>
+  ↳ One annotation row per retained transcript cluster, with Entrez ID,
+  symbol, gene name, gene type, and Ensembl ID.
+
+- **Output:** <span class="downstream-file">`analysis_samples_mrna.csv`</span><br>
+  ↳ Metadata for the biological samples represented by the expression
+  columns, including animal ID, sex, age, treatment, and CEL filename.
+
+- **Output:** `transcript_cluster_filter_report_mrna.csv`<br>
+  ↳ Every original transcript cluster, whether it was retained, and the
+  reason for any exclusion.
+
+- **Output:** `analysis_ready_summary_mrna.txt`<br>
+  ↳ Input paths, filtering rules, retained and excluded counts, matrix
+  dimensions, and validation checks.
+
+:::
 
 **Expected outcome:** expression and annotation contain the same uniquely
 gene-mapped transcript clusters in identical order, sample columns match the
@@ -845,7 +1201,7 @@ analysis metadata, and all retained expression values are finite.
 
 <hr class="section-divider">
 
-# Analysis-ready mRNA sample quality control
+# mRNA sample quality control
 
 The analysis-ready expression matrix has passed feature annotation and
 filtering, but the biological samples must also be evaluated before
@@ -856,10 +1212,16 @@ and does not remove samples.
 
 The QC script uses these two outputs from the preceding section:
 
-- `results/mrna/analysis_ready/expression_matrix_unique_gene_mapped_mrna.csv`
-- `results/mrna/analysis_ready/analysis_samples_mrna.csv`
+- **Input:** `results/mrna/analysis_ready/expression_matrix_unique_gene_mapped_mrna.csv`
+- **Input:** `results/mrna/analysis_ready/analysis_samples_mrna.csv`
 
 ## Run sample-level quality control
+
+<span class="script-name">mRNA Script 04</span>:
+`scripts/mrna/04_sample_qc_mrna.R`
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: run-analysis-ready-mrna-sample-qc
@@ -870,14 +1232,17 @@ system2(
   file.path(
     project_root,
     "scripts/mrna/04_sample_qc_mrna.R"
-  )
+  ),
+  stdout = FALSE
 )
 ```
 
-Automatic evaluation is disabled because the script writes result files. The
-script verifies sample alignment and finite expression values, then calculates
-expression summaries, PCA, hierarchical clustering, distance from the
-expression centroid, median inter-sample correlation, and distance in the
+
+:::
+
+The script verifies sample alignment and finite expression values, then
+calculates expression summaries, PCA, hierarchical clustering, distance from
+the expression centroid, median inter-sample correlation, and distance in the
 first two principal components.
 
 A sample is flagged for review if it is more than three standard deviations
@@ -887,17 +1252,41 @@ decisions.
 
 ## Review the quality-control outputs
 
-The script writes all outputs under `results/mrna/qc/analysis_ready/`:
+::: {.callout-note collapse="true" appearance="minimal"}
+### mRNA <span class="script-name">Script 04</span> outputs {.unnumbered .unlisted}
 
-| Output | Contents |
-|---|---|
-| `expression_boxplot_mrna.png` and `expression_density_mrna.png` | Normalized expression distributions across the analysis-ready samples. |
-| `pca_by_treatment_mrna.png`, `pca_by_sex_mrna.png`, `pca_by_age_group_mrna.png`, and `pca_by_array_prefix_mrna.png` | The same PCA coordinates labelled by key biological and technical variables. |
-| `sample_clustering_mrna.png` | Unsupervised hierarchical clustering of samples using the analysis-ready expression matrix. |
-| `pca_scores_mrna.csv` | Sample metadata, PC1 and PC2 scores, explained variance, and two-dimensional PCA distance. |
-| `sample_qc_metrics_mrna.csv` | Per-sample expression summaries, distance and correlation metrics, and all review flags. |
-| `possible_outliers_mrna.csv` | Only samples that meet at least one predefined review rule; the file may contain zero rows. |
-| `sample_qc_summary_mrna.txt` | Input paths, dimensions, finite-value checks, explained variance, flag rules, and the number of samples flagged. |
+**Output directory:** `results/mrna/qc/analysis_ready/`
+
+- **Output:** `expression_boxplot_mrna.png` and
+  `expression_density_mrna.png`<br>
+  ↳ Normalized expression distributions across the analysis-ready samples.
+
+- **Output:** `pca_by_treatment_mrna.png`, `pca_by_sex_mrna.png`,
+  `pca_by_age_group_mrna.png`, and `pca_by_array_prefix_mrna.png`<br>
+  ↳ The same PCA coordinates labelled by key biological and technical
+  variables.
+
+- **Output:** `sample_clustering_mrna.png`<br>
+  ↳ Unsupervised hierarchical clustering of samples using the analysis-ready
+  expression matrix.
+
+- **Output:** `pca_scores_mrna.csv`<br>
+  ↳ Sample metadata, PC1 and PC2 scores, explained variance, and
+  two-dimensional PCA distance.
+
+- **Output:** `sample_qc_metrics_mrna.csv`<br>
+  ↳ Per-sample expression summaries, distance and correlation metrics, and
+  all review flags.
+
+- **Output:** `possible_outliers_mrna.csv`<br>
+  ↳ Only samples that meet at least one predefined review rule; the file may
+  contain zero rows.
+
+- **Output:** `sample_qc_summary_mrna.txt`<br>
+  ↳ Input paths, dimensions, finite-value checks, explained variance, flag
+  rules, and the number of samples flagged.
+
+:::
 
 **Expected outcome:** the QC matrix contains only finite values, expression
 distributions are broadly comparable, PCA and clustering files are created,
@@ -920,6 +1309,12 @@ not written to a second manifest.
 
 ## Create and validate the paired manifest
 
+<span class="script-name">Multi-omics Script 00</span>:
+`scripts/multiomics/00_build_paired_sample_manifest.R`
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
+
 ```{r}
 #| label: build-paired-mirna-mrna-manifest
 #| eval: false
@@ -929,24 +1324,45 @@ system2(
   file.path(
     project_root,
     "scripts/multiomics/00_build_paired_sample_manifest.R"
-  )
+  ),
+  stdout = FALSE
 )
 ```
 
-Automatic evaluation is disabled because the script writes result files. The
-miRNA and mRNA metadata already use the standardized labels `Sham`, `MCAO1hr`,
-`MCAO3hr`, and `MCAO24hr`. The script requires treatment and sex to agree
-across layers for every pair and records MD5 checksums of all four input files.
+
+:::
+
+The script matches miRNA and mRNA samples using animal ID. The shared treatment
+groups already have the same names in both datasets: `Sham`, `MCAO1hr`,
+`MCAO3hr`, and `MCAO24hr`. For every animal found in both molecular layers,
+the treatment and sex must also match. If either value differs, the script
+stops rather than creating an incorrect pair.
+
+The script also records an MD5 checksum for each of its four inputs: the miRNA
+sample table, miRNA expression matrix, mRNA sample table, and mRNA expression
+matrix. These checksums provide a record of the exact files used to build the
+paired manifest.
 
 ## Review the manifest outputs
 
-All outputs are written under `results/multiomics/sample_manifest/`:
+::: {.callout-note collapse="true" appearance="minimal"}
+### Multi-omics <span class="script-name">Script 00</span> outputs {.unnumbered .unlisted}
 
-| Output | Contents |
-|---|---|
-| `paired_manifest_mirna_mrna.csv` | One row per retained animal, with standardized treatment and the matching miRNA and mRNA filenames. |
-| `unpaired_samples_mirna_mrna.csv` | Biological samples present in only one molecular layer, with the missing layer recorded. |
-| `paired_manifest_summary.txt` | Input files and checksums, pair counts, treatment counts, exclusions, and validation results. |
+**Output directory:** `results/multiomics/sample_manifest/`
+
+- **Output:** `paired_manifest_mirna_mrna.csv`<br>
+  ↳ One row per retained animal, with standardized treatment and the matching
+  miRNA and mRNA filenames.
+
+- **Output:** `unpaired_samples_mirna_mrna.csv`<br>
+  ↳ Biological samples present in only one molecular layer, with the missing
+  layer recorded.
+
+- **Output:** `paired_manifest_summary.txt`<br>
+  ↳ Input files and checksums, pair counts, treatment counts, exclusions, and
+  validation results.
+
+:::
 
 **Expected outcome:** every retained animal has one miRNA file and one mRNA
 file, animal IDs are unique, sex and standardized treatment agree across
@@ -969,10 +1385,47 @@ MCAO1hr. Each limma summary records the selected model, manifest path,
 included sample count, and any paired animals unavailable in the selected
 expression dataset.
 
+<span class="script-name">miRNA Script 05</span>:
+`scripts/mirna/05_differential_expression_mirna.R`
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show command {.unnumbered .unlisted}
+
 ```bash
 Rscript scripts/mirna/05_differential_expression_mirna.R \
   <dataset> <treatment_only|treatment_sex|treatment_age|treatment_sex_age>
 ```
+
+
+:::
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### miRNA <span class="script-name">Script 05</span> outputs {.unnumbered .unlisted}
+
+**Output directory:**
+`results/mirna/differential_expression/<dataset>/<model>_limma/`
+
+- **Output:** `analysis_samples_mirna.csv`<br>
+  ↳ Paired animals included in the selected miRNA expression dataset.
+
+- **Output:** `design_matrix_mirna.csv` and `contrast_matrix_mirna.csv`<br>
+  ↳ The fitted model and the three treatment contrasts.
+
+- **Output:** `mouse_mature_mirna_<contrast>_mirna.csv`<br>
+  ↳ Limma statistics for every retained mature mouse miRNA probeset.
+
+- **Output:** `dabg20_<contrast>_mirna.csv`<br>
+  ↳ Limma results for the DABG20-filtered miRNA probesets when vendor
+  detection values are available.
+
+- **Output:** `dabg_detection_summary_mirna.csv`<br>
+  ↳ Probe-level vendor detection counts, fractions, and DABG20 filter status.
+
+- **Output:** `limma_summary_mirna.txt`<br>
+  ↳ Dataset, model, manifest coverage, feature counts, contrasts, and
+  raw/BH-adjusted result counts.
+
+:::
 
 **Expected outcome:** the selected design matrix is full rank, contains the
 treatment coefficients and the requested adjustment coefficient, and produces
@@ -1010,6 +1463,12 @@ Every model uses the paired Sham, MCAO1hr, and MCAO3hr groups and tests:
 
 ## Run the mRNA limma analysis
 
+<span class="script-name">mRNA Script 05</span>:
+`scripts/mrna/05_differential_expression_mrna.R`
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
+
 ```{r}
 #| label: run-mrna-treatment-only-limma
 #| eval: false
@@ -1022,9 +1481,13 @@ system2(
       "scripts/mrna/05_differential_expression_mrna.R"
     ),
     "<treatment_only|treatment_sex|treatment_age|treatment_sex_age>"
-  )
+  ),
+  stdout = FALSE
 )
 ```
+
+
+:::
 
 The script validates the manifest samples, preserves their order, fits the
 three contrasts with `limma`, and joins gene annotation to each result. If the
@@ -1036,16 +1499,30 @@ results without changing other model folders.
 
 ## Review the mRNA DE results
 
-The script writes all outputs under
-`results/mrna/differential_expression/<model>_limma/`:
+::: {.callout-note collapse="true" appearance="minimal"}
+### mRNA <span class="script-name">Script 05</span> outputs {.unnumbered .unlisted}
 
-| Output | Contents |
-|---|---|
-| `analysis_samples_mrna.csv` | The analyzed mice in paired-manifest order, with their validated metadata. |
-| `design_matrix_mrna.csv` | The treatment-only design matrix. |
-| `contrast_matrix_mrna.csv` | The three contrast definitions and their coefficient directions. |
-| `transcript_cluster_<contrast>_mrna.csv` | Limma statistics for every retained transcript cluster, with Entrez ID, symbol, gene name, gene type, and Ensembl ID. |
-| `limma_summary_mrna.txt` | Dataset, model, manifest, sample counts, transcript-cluster count, contrasts, and raw/BH-adjusted result counts. |
+**Output directory:** `results/mrna/differential_expression/<model>_limma/`
+
+- **Output:** `analysis_samples_mrna.csv`<br>
+  ↳ The analyzed mice in paired-manifest order, with their validated
+  metadata.
+
+- **Output:** `design_matrix_mrna.csv`<br>
+  ↳ The treatment-only design matrix.
+
+- **Output:** `contrast_matrix_mrna.csv`<br>
+  ↳ The three contrast definitions and their coefficient directions.
+
+- **Output:** `transcript_cluster_<contrast>_mrna.csv`<br>
+  ↳ Limma statistics for every retained transcript cluster, with Entrez ID,
+  symbol, gene name, gene type, and Ensembl ID.
+
+- **Output:** `limma_summary_mrna.txt`<br>
+  ↳ Dataset, model, manifest, sample counts, transcript-cluster count,
+  contrasts, and raw/BH-adjusted result counts.
+
+:::
 
 **Expected outcome:** samples appear in exact manifest order, treatment counts
 match the manifest, every result table contains one row per retained transcript
@@ -1069,12 +1546,12 @@ does not prove direct regulation or causality.
 
 <div class="purpose-box">
 
-The primary integration question is:
+<p class="integration-question-label">The primary integration question is:</p>
 
-> Which treatment-associated miRNAs are linked to treatment-associated mouse
+> **Which treatment-associated miRNAs are linked to treatment-associated mouse
 > genes through documented or predicted target relationships, and do those
 > miRNA–gene pairs show a compatible expression relationship in the same
-> animals?
+> animals?**
 
 </div>
 
@@ -1095,26 +1572,22 @@ Their results are connected only afterward using:
    of the evidence are reasonably similar in the treatment-only and adjusted
    models, rather than appearing in only one specification.
 
-The primary expression model is:
+**The primary expression model is:**
 
-```text
-expression ~ treatment + sex + age
-```
+**`expression ~ treatment + sex + age`**
 
 The treatment contrasts are:
 
-```text
-MCAO1hr vs Sham
-MCAO3hr vs Sham
-MCAO3hr vs MCAO1hr
-```
+- `MCAO1hr` vs `Sham`
+- `MCAO3hr` vs `Sham`
+- `MCAO3hr` vs `MCAO1hr`
 
 Treatment-only, treatment-plus-sex, and treatment-plus-age models are used as
 sensitivity analyses. The analysis does not estimate mediation or prove that
 a miRNA causes an mRNA change because no stroke-severity outcome or temporal
 measurement is available.
 
-### Starting point
+### Initial inputs for miRNA–mRNA integration
 
 The first integration step is to obtain versioned mouse miRNA–target resources:
 
@@ -1127,21 +1600,21 @@ These files are needed to create the lookup relationship:
 measured mouse miRNA → candidate mouse target gene
 ```
 
-They will then be matched to:
+They will then be matched to the local analysis outputs listed below. These
+outputs are intentionally excluded from the public repository, so the paths
+are shown as file locations rather than links.
 
-- the [annotated miRNA DE results](../results/mirna/differential_expression/);
-- the [uniquely gene-mapped mRNA DE results](../results/mrna/differential_expression/);
-- the [43-mouse paired manifest](../results/multiomics/sample_manifest/paired_manifest_mirna_mrna.csv).
+- **Input:** `results/mirna/differential_expression/` (annotated miRNA DE results)
+- **Input:** `results/mrna/differential_expression/` (uniquely gene-mapped mRNA DE results)
+- **Input:** `results/multiomics/sample_manifest/paired_manifest_mirna_mrna.csv` (43-mouse paired manifest)
 
 The initial integration inputs are:
 
-```text
-results/multiomics/sample_manifest/paired_manifest_mirna_mrna.csv
-results/mirna/differential_expression/
-results/mrna/differential_expression/
-resources/mirna_target_databases/mirtarbase_10.0/mmu_MTI.csv
-resources/mirna_target_databases/targetscanmouse_8.0/
-```
+- **Input:** `results/multiomics/sample_manifest/paired_manifest_mirna_mrna.csv`
+- **Input:** `results/mirna/differential_expression/`
+- **Input:** `results/mrna/differential_expression/`
+- **Input:** `resources/mirna_target_databases/mirtarbase_10.0/mmu_MTI.csv`
+- **Input:** `resources/mirna_target_databases/targetscanmouse_8.0/`
 
 The current outputs include an evidence-level table, a unique measured-pair
 table, an FDR candidate table, adjusted paired-animal association results, a
@@ -1150,35 +1623,44 @@ summary. Gene rankings, gene lists, backgrounds, and miRNA target sets are
 also prepared for enrichment testing. Full-ranked mRNA GSEA and formal ORA
 have now been run as separate analyses:
 
-<div class="workflow-box">
+```{mermaid}
+%%| fig-align: center
+%%| fig-width: 8
+%%{init: {
+  "flowchart": {
+    "rankSpacing": 22,
+    "nodeSpacing": 24,
+    "padding": 8,
+    "wrappingWidth": 170
+  },
+  "themeVariables": {
+    "fontSize": "13px"
+  }
+}}%%
 
-```text
-Paired manifest
-      ↓
-Separate miRNA and mRNA limma results
-      ↓
-Mouse miRNA–target resources
-      ↓
-Target-supported pair matching
-      ↓
-Exact-feature DE result joining
-      ↓
-Unique measured-pair evidence summary
-      ↓
-FDR candidate table
-      ↓
-Paired expression association
-      ↓
-Integrated miRNA–mRNA pair evidence
-      ↓
-Gene rankings, selected lists, and measured backgrounds
-      ├── Full-ranked mRNA GSEA
-      │         ↓
-      │   Redundancy-reduced GSEA summary
-      └── Formal 53-gene ORA with a 1,106-gene background
+flowchart TD
+  A["Paired manifest"] --> B["Separate miRNA and mRNA<br/>limma results"]
+  B --> C["Mouse miRNA–target<br/>resources"]
+  C --> D["Target-supported<br/>pair matching"]
+  D --> E["Exact-feature DE<br/>result joining"]
+  E --> F["Unique measured-pair<br/>evidence summary"]
+  F --> G["FDR candidate table"]
+  G --> H["Paired expression<br/>association"]
+  H --> I["Integrated miRNA–mRNA<br/>pair evidence"]
+  I --> J["Gene rankings, selected lists,<br/>and measured backgrounds"]
+
+  J --> K["Full-ranked<br/>mRNA GSEA"]
+  J --> L["Formal 53-gene ORA<br/>with a 1,106-gene<br/>background"]
+  K --> M["Redundancy-reduced<br/>GSEA summary"]
+
+  classDef shared fill:#eef8f2,stroke:#4c9a78,color:#21493c,stroke-width:1.5px;
+  classDef gsea fill:#eef4fb,stroke:#4f83b5,color:#1f4668,stroke-width:1.5px;
+  classDef ora fill:#fff6e5,stroke:#d39a3a,color:#674814,stroke-width:1.5px;
+
+  class A,B,C,D,E,F,G,H,I,J shared;
+  class K,M gsea;
+  class L ora;
 ```
-
-</div>
 
 ## Obtain miRNA–mRNA target resources
 
@@ -1190,22 +1672,17 @@ external databases.
 
 ### Download the validated miRTarBase interactions
 
-miRTarBase provides experimentally curated miRNA–target interactions. Open the
-[current miRTarBase downloads page](https://awi.cuhk.edu.cn/miRTarBase/downloads/)
-and download the **Mus musculus** species-specific file named `mmu_MTI.csv`.
-Save it as:
+miRTarBase provides experimentally curated miRNA–target interactions. Download
+the **Mus musculus** species-specific file named `mmu_MTI.csv`.
 
-```text
-resources/mirna_target_databases/mirtarbase_10.0/mmu_MTI.csv
-```
-
-The current direct download is:
-
-```text
-https://awi.cuhk.edu.cn/miRTarBase/downloads/files/10.0/mmu_MTI.csv
-```
+- **Download page:** [miRTarBase downloads](https://awi.cuhk.edu.cn/miRTarBase/downloads/)
+- **Direct download:** [miRTarBase 10.0 mouse interactions (`mmu_MTI.csv`)](https://awi.cuhk.edu.cn/miRTarBase/downloads/files/10.0/mmu_MTI.csv)
+- **Save as:** `resources/mirna_target_databases/mirtarbase_10.0/mmu_MTI.csv`
 
 The command-line equivalent is:
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show command {.unnumbered .unlisted}
 
 ```bash
 mkdir -p resources/mirna_target_databases/mirtarbase_10.0
@@ -1214,6 +1691,9 @@ curl -L --fail \
   -o resources/mirna_target_databases/mirtarbase_10.0/mmu_MTI.csv
 ```
 
+
+:::
+
 Keep the original filename and record the release, download date, and SHA-256
 checksum in a local source-metadata file. The table should contain mouse
 miRNA identifiers, mouse target genes or Entrez IDs, experimental methods,
@@ -1221,23 +1701,25 @@ support type, and PubMed references.
 
 ### Download the predicted TargetScanMouse interactions
 
-TargetScanMouse provides computationally predicted mouse miRNA targets. Use
-the [TargetScanMouse 8.0 download page](https://www.targetscan.org/cgi-bin/targetscan/data_download.mmu80.cgi)
-and download these files:
+TargetScanMouse provides computationally predicted mouse miRNA targets.
 
-| File | Purpose |
-|---|---|
-| `miR_Family_Info.txt.zip` | miRNA-family, miRBase identifier, and sequence information |
-| `Gene_info.txt.zip` | Mouse transcript, gene, and gene-symbol annotations |
-| `Summary_Counts.default_predictions.txt.zip` | Default conserved mouse target predictions and scores |
+- **Download page:** [TargetScanMouse 8.0 downloads](https://www.targetscan.org/cgi-bin/targetscan/data_download.mmu80.cgi)
 
-Save and extract them under:
+- **Direct download:** [TargetScanMouse miRNA-family information (`miR_Family_Info.txt.zip`)](https://www.targetscan.org/mmu_80/mmu_80_data_download/miR_Family_Info.txt.zip)<br>
+  ↳ miRNA-family, miRBase identifier, and sequence information.
 
-```text
-resources/mirna_target_databases/targetscanmouse_8.0/
-```
+- **Direct download:** [TargetScanMouse gene information (`Gene_info.txt.zip`)](https://www.targetscan.org/mmu_80/mmu_80_data_download/Gene_info.txt.zip)<br>
+  ↳ Mouse transcript, gene, and gene-symbol annotations.
+
+- **Direct download:** [TargetScanMouse default predictions (`Summary_Counts.default_predictions.txt.zip`)](https://www.targetscan.org/mmu_80/mmu_80_data_download/Summary_Counts.default_predictions.txt.zip)<br>
+  ↳ Default conserved mouse target predictions and scores.
+
+- **Save and extract under:** `resources/mirna_target_databases/targetscanmouse_8.0/`
 
 For example:
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show command {.unnumbered .unlisted}
 
 ```bash
 mkdir -p resources/mirna_target_databases/targetscanmouse_8.0
@@ -1258,6 +1740,9 @@ unzip -o resources/mirna_target_databases/targetscanmouse_8.0/Summary_Counts.def
   -d resources/mirna_target_databases/targetscanmouse_8.0/
 ```
 
+
+:::
+
 Filter TargetScan records to `Species ID = 10090` before matching them to the
 mouse expression results. Preserve the original ZIP archives, extracted files,
 release information, download date, and checksums. Both resource folders are
@@ -1275,7 +1760,27 @@ each relationship.
 The miRTarBase script keeps only rows with mouse species fields and a
 normalized `mmu-` miRNA identifier, excluding cross-species entries.
 
+The scripts are:
+
+1. <span class="script-name">Multi-omics Script 01</span>:
+   `scripts/multiomics/01_prepare_mirtarbase_targets.R`
+2. <span class="script-name">Multi-omics Script 02</span>:
+   `scripts/multiomics/02_prepare_targetscanmouse_targets.R`
+3. <span class="script-name">Multi-omics Script 03</span>:
+   `scripts/multiomics/03_combine_mirna_target_evidence.R`
+4. <span class="script-name">Multi-omics Script 04</span>:
+   `scripts/multiomics/04_build_measured_mirna_mrna_target_pairs.R`
+5. <span class="script-name">Multi-omics Script 05</span>:
+   `scripts/multiomics/05_join_target_pairs_to_de_results.R`
+6. <span class="script-name">Multi-omics Script 06</span>:
+   `scripts/multiomics/06_summarize_target_pair_de_results.R`
+7. <span class="script-name">Multi-omics Script 07</span>:
+   `scripts/multiomics/07_collapse_target_evidence_to_unique_pairs.R`
+
 Run the scripts in this order from the repository root:
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show command {.unnumbered .unlisted}
 
 ```bash
 Rscript scripts/multiomics/01_prepare_mirtarbase_targets.R
@@ -1287,33 +1792,90 @@ Rscript scripts/multiomics/06_summarize_target_pair_de_results.R
 Rscript scripts/multiomics/07_collapse_target_evidence_to_unique_pairs.R
 ```
 
-The scripts write these outputs under
-`results/multiomics/miRNA_target_evidence/`:
 
-| Output | Contents |
-|---|---|
-| `mirtarbase/mirtarbase_mouse_targets_standardized.csv` | One standardized row per distinct mouse miRNA–gene relationship from miRTarBase, including experimental evidence and PubMed references. |
-| `targetscanmouse/targetscanmouse_targets_standardized.csv` | Mouse TargetScanMouse relationships with representative miRNA, target gene, transcript, and prediction scores. |
-| `combined/mirna_mouse_target_evidence.csv` | Combined evidence table retaining the source database for each relationship and indicating when a pair appears in both resources. |
-| `analysis_ready/mirna_mrna_target_pairs.csv` | Target-supported relationships whose miRNAs and mRNA genes are present in the analysis-ready annotations, with the identifier used for each match. |
-| `analysis_ready/mirna_mrna_de_supported_target_pairs.csv` | Long-format target-pair table joined to the three treatment–sex–age DABG20 miRNA and mRNA DE contrasts, including both layers' DE statistics. |
-| `analysis_ready/mirna_mrna_de_pair_evidence_summary.csv` | Evidence-row table with FDR < 0.10 flags, candidate categories, and inverse-logFC direction flags for each contrast. Separate database records and publications remain separate rows. |
-| `analysis_ready/mirna_mrna_unique_pair_summary.csv` | One row per exact miRNA probeset–mRNA transcript cluster–contrast combination, with miRTarBase and TargetScanMouse evidence summarized in separate columns. |
-| `analysis_ready/mirna_mrna_fdr_candidates.csv` | The unique measured pair–contrast rows for which both the miRNA and mRNA adjusted p-values are below 0.10. |
+:::
 
-Script 04 normalizes miRNA IDs case-insensitively, strips version suffixes from
+::: {.callout-note collapse="true" appearance="minimal"}
+### Multi-omics <span class="script-name">Script 01</span> outputs {.unnumbered .unlisted}
+
+- **Output:** `results/multiomics/miRNA_target_evidence/mirtarbase/mirtarbase_mouse_targets_standardized.csv`<br>
+  ↳ Standardized mouse miRNA–gene relationships from miRTarBase, retaining
+  experimental evidence and PubMed references.
+
+:::
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Multi-omics <span class="script-name">Script 02</span> outputs {.unnumbered .unlisted}
+
+- **Output:** `results/multiomics/miRNA_target_evidence/targetscanmouse/targetscanmouse_targets_standardized.csv`<br>
+  ↳ Standardized TargetScanMouse relationships with representative miRNA,
+  target gene, transcript, and prediction scores.
+
+:::
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Multi-omics <span class="script-name">Script 03</span> outputs {.unnumbered .unlisted}
+
+- **Output:** `results/multiomics/miRNA_target_evidence/combined/mirna_mouse_target_evidence.csv`<br>
+  ↳ Combined target evidence retaining the source database and indicating
+  when a relationship occurs in both resources.
+
+:::
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Multi-omics <span class="script-name">Script 04</span> outputs {.unnumbered .unlisted}
+
+- **Output:** `results/multiomics/miRNA_target_evidence/analysis_ready/mirna_mrna_target_pairs.csv`<br>
+  ↳ Target-supported relationships whose miRNAs and genes are measured, with
+  the identifier used for each match.
+
+:::
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Multi-omics <span class="script-name">Script 05</span> outputs {.unnumbered .unlisted}
+
+- **Output:** `results/multiomics/miRNA_target_evidence/analysis_ready/mirna_mrna_de_supported_target_pairs.csv`<br>
+  ↳ Long-format target pairs joined to the three treatment–sex–age DABG20
+  miRNA and mRNA DE contrasts.
+
+:::
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Multi-omics <span class="script-name">Script 06</span> outputs {.unnumbered .unlisted}
+
+- **Output:** `results/multiomics/miRNA_target_evidence/analysis_ready/mirna_mrna_de_pair_evidence_summary.csv`<br>
+  ↳ Evidence rows with FDR < 0.10 flags, candidate categories, and
+  inverse-logFC direction flags for each contrast.
+
+:::
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Multi-omics <span class="script-name">Script 07</span> outputs {.unnumbered .unlisted}
+
+- **Output:** `results/multiomics/miRNA_target_evidence/analysis_ready/mirna_mrna_unique_pair_summary.csv`<br>
+  ↳ One row per exact miRNA probeset–mRNA transcript cluster–contrast
+  combination, with miRTarBase and TargetScanMouse evidence summarized in
+  separate columns.
+
+- **Output:** `results/multiomics/miRNA_target_evidence/analysis_ready/mirna_mrna_fdr_candidates.csv`<br>
+  ↳ The unique measured pair–contrast rows for which both the miRNA and mRNA
+  adjusted p-values are below 0.10.
+
+:::
+
+<span class="script-name">Script 04</span> normalizes miRNA IDs case-insensitively, strips version suffixes from
 Ensembl IDs, and matches target genes to the measured mRNA annotation by Entrez
-ID, Ensembl gene ID, or gene symbol. Script 05 then joins the three DABG20
+ID, Ensembl gene ID, or gene symbol. <span class="script-name">Script 05</span> then joins the three DABG20
 miRNA and mRNA DE contrasts using the exact miRNA probeset and exact mRNA
-transcript-cluster IDs already established in script 04. Gene identifiers are
+transcript-cluster IDs already established in <span class="script-name">Script 04</span>. Gene identifiers are
 used to validate that exact feature join, not to rematch DE results across
 multiple transcript clusters belonging to the same gene.
 
-Script 06 adds transparent FDR and direction categories while retaining the
-individual evidence records. Script 07 collapses those records to one row per
+<span class="script-name">Script 06</span> adds transparent FDR and direction categories while retaining the
+individual evidence records. <span class="script-name">Script 07</span> collapses those records to one row per
 exact measured pair and contrast. It keeps miRTarBase publication and
 experimental evidence separate from TargetScanMouse transcript and prediction
-evidence rather than treating the two resources as equivalent. Script 07 also
+evidence rather than treating the two resources as equivalent. <span class="script-name">Script 07</span> also
 writes the subset passing the FDR < 0.10 threshold in both molecular layers to
 `mirna_mrna_fdr_candidates.csv`.
 
@@ -1347,6 +1909,9 @@ and evidence source.
 Before matching target relationships to differential-expression results, list
 the available files and confirm their identifier columns:
 
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
+
 ```{r}
 list.files(
   c(
@@ -1356,6 +1921,9 @@ list.files(
   full.names = TRUE
 )
 ```
+
+
+:::
 
 The inspection confirms that both datasets contain all three treatment
 contrasts and use the treatment–sex–age model. miRNA results identify features
@@ -1372,9 +1940,15 @@ counted as independent miRNA–mRNA candidates.
 
 Run the evidence-collapsing script from the repository root:
 
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show command {.unnumbered .unlisted}
+
 ```bash
 Rscript scripts/multiomics/07_collapse_target_evidence_to_unique_pairs.R
 ```
+
+
+:::
 
 The unique key is:
 
@@ -1386,11 +1960,19 @@ The script first verifies that all DE statistics and candidate flags are
 constant within that exact key. It then writes the complete unique-pair table
 and the smaller FDR candidate table:
 
-```text
-results/multiomics/miRNA_target_evidence/analysis_ready/
-  mirna_mrna_unique_pair_summary.csv
-  mirna_mrna_fdr_candidates.csv
-```
+::: {.callout-note collapse="true" appearance="minimal"}
+### Multi-omics <span class="script-name">Script 07</span> outputs {.unnumbered .unlisted}
+
+**Output directory:** `results/multiomics/miRNA_target_evidence/analysis_ready/`
+
+- **Output:** `mirna_mrna_unique_pair_summary.csv`<br>
+  ↳ Complete table containing one row per unique measured pair and contrast.
+
+- **Output:** `mirna_mrna_fdr_candidates.csv`<br>
+  ↳ Smaller table containing pairs that pass the FDR threshold in both
+  molecular layers.
+
+:::
 
 The output preserves separate support indicators, record counts, identifiers,
 references, experimental evidence, transcripts, and prediction-score summaries
@@ -1404,13 +1986,13 @@ and the two target resources remain distinguishable.
 
 ### Review pairs passing the FDR threshold in both layers
 
-Script 06 labels a row `both_layers_fdr_lt_0.10` when the adjusted p-value is
+<span class="script-name">Script 06</span> labels a row `both_layers_fdr_lt_0.10` when the adjusted p-value is
 below 0.10 for both the miRNA and its matched mRNA transcript cluster in the
 same treatment contrast. Before evidence records were collapsed, 59 rows met
 this rule. Some of those rows described the same measured pair more than once
 because they came from separate target-database records or publications.
 
-Script 07 groups rows using the exact miRNA probeset, exact mRNA transcript
+<span class="script-name">Script 07</span> groups rows using the exact miRNA probeset, exact mRNA transcript
 cluster, and treatment contrast. After that grouping, the 59 evidence rows
 represent 56 distinct measured pair–contrast rows. All 56 occur in the
 `MCAO3hr_vs_MCAO1hr` contrast.
@@ -1429,6 +2011,9 @@ evidence; they do not prove that a miRNA directly regulates a gene.
 
 For subsequent review or association analysis, read both new outputs and
 confirm that the saved candidate table exactly matches the documented filter:
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: inspect-fdr-candidate-pairs
@@ -1500,11 +2085,17 @@ stopifnot(
 )
 ```
 
+
+:::
+
 **Expected outcome:** the saved candidate table contains 56 non-duplicated
 rows, exactly matches the filter applied to the complete unique-pair table,
 and places all candidates in `MCAO3hr_vs_MCAO1hr`.
 
 ### Test adjusted associations across paired animals
+
+<span class="script-name">Multi-omics Script 08</span>:
+`scripts/multiomics/08_test_adjusted_paired_associations.R`
 
 Association asks whether animals with higher expression of a particular miRNA
 also tend to have higher or lower expression of its target mRNA. A negative
@@ -1513,7 +2104,7 @@ target-mRNA expression, which is compatible with possible miRNA repression.
 A positive association means that the miRNA and mRNA tend to change together.
 Neither result proves direct regulation or causality.
 
-Script 08 retrieves the miRNA and mRNA expression values for each of the 56
+<span class="script-name">Script 08</span> retrieves the miRNA and mRNA expression values for each of the 56
 candidate pairs in the same 43 mice. It aligns the two molecular layers using
 the frozen paired manifest and verifies that animals and measured features are
 complete, unique, and in the same order.
@@ -1534,24 +2125,36 @@ primary association test. Benjamini–Hochberg correction is applied across the
 
 Run the association script from the repository root:
 
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show command {.unnumbered .unlisted}
+
 ```bash
 Rscript scripts/multiomics/08_test_adjusted_paired_associations.R
 ```
 
-> **Script 08 outputs**
->
-> - `results/multiomics/paired_association/mirna_mrna_adjusted_association_results.csv`
->   contains one row per tested measured pair. It retains the DE results and
->   target-source evidence and adds the unadjusted correlation, adjusted
->   slope, partial correlation, confidence interval, p-value, and pair-level
->   FDR.
->
-> - `results/multiomics/paired_association/mirna_mrna_adjusted_association_summary.txt`
->   records the sample counts, model, number of tests, association-direction
->   counts, significance counts, and the pair with the smallest adjusted
->   association p-value.
+
+:::
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Multi-omics <span class="script-name">Script 08</span> outputs {.unnumbered .unlisted}
+
+- **Output:** `results/multiomics/paired_association/mirna_mrna_adjusted_association_results.csv`<br>
+  ↳ One row per tested measured pair. It retains the DE results and
+  target-source evidence and adds the unadjusted correlation, adjusted
+  slope, partial correlation, confidence interval, p-value, and pair-level
+  FDR.
+
+- **Output:** `results/multiomics/paired_association/mirna_mrna_adjusted_association_summary.txt`<br>
+  ↳ Records the sample counts, model, number of tests, association-direction
+  counts, significance counts, and the pair with the smallest adjusted
+  association p-value.
+
+:::
 
 Inspect and validate the saved results:
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: inspect-adjusted-paired-associations
@@ -1620,7 +2223,10 @@ stopifnot(
 )
 ```
 
-**Expected outcome after running Script 08 on the 56 selected candidate
+
+:::
+
+**Expected outcome after running <span class="script-name">Script 08</span> on the 56 selected candidate
 pairs:** all 56 pairs are tested across all 43 paired animals and produce
 can becomplete finite statistics. Nineteen adjusted associations are negative and
 37 are positive. No adjusted association has a raw p-value below 0.05, and
@@ -1631,6 +2237,9 @@ not show statistically supported expression association after adjustment for
 treatment, sex, and age.
 
 ### Examine covariate effects on associations
+
+<span class="script-name">Multi-omics Script 09</span>:
+`scripts/multiomics/09_examine_covariate_effects_on_associations.R`
 
 The unadjusted results and the fully adjusted results answer different
 questions. The unadjusted correlation asks whether the miRNA and mRNA move
@@ -1645,7 +2254,7 @@ all mice simply because both respond to treatment. An unadjusted correlation
 in this selected set is descriptive and is not independent evidence of
 miRNA-mediated regulation.
 
-Script 09 compares five pre-specified models:
+<span class="script-name">Script 09</span> compares five pre-specified models:
 
 1. no covariate adjustment across all 43 animals;
 2. treatment adjustment across all 43 animals;
@@ -1661,32 +2270,44 @@ within each model.
 
 Run the covariate-effects script from the repository root:
 
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show command {.unnumbered .unlisted}
+
 ```bash
 Rscript scripts/multiomics/09_examine_covariate_effects_on_associations.R
 ```
 
-> **Script 09 outputs**
->
-> - `results/multiomics/paired_association/covariate_effects/mirna_mrna_association_model_comparison_long.csv`
->   contains one row per measured pair per model, giving 280 rows for 56 pairs
->   across five models. It records the association slope, partial correlation,
->   confidence interval, raw p-value, FDR, direction, and sample count.
->
-> - `results/multiomics/paired_association/covariate_effects/mirna_mrna_association_model_comparison_wide.csv`
->   places the five model results beside one another for each of the 56 pairs.
->   It also flags which unadjusted raw-p findings no longer have raw p < 0.05
->   after treatment, sex-and-age, or full adjustment.
->
-> - `results/multiomics/paired_association/covariate_effects/mirna_mrna_association_model_comparison_summary.txt`
->   records the number of animals, raw-p findings, FDR findings, and
->   smallest-p pair for each model.
->
-> - `results/multiomics/paired_association/covariate_effects/figures/`
->   contains treatment-colored plots for the ten smallest unadjusted p-values,
->   the 13 inverse-DE pairs, and a direct comparison of unadjusted versus fully
->   adjusted p-values.
+
+:::
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Multi-omics <span class="script-name">Script 09</span> outputs {.unnumbered .unlisted}
+
+- **Output:** `results/multiomics/paired_association/covariate_effects/mirna_mrna_association_model_comparison_long.csv`<br>
+  ↳ One row per measured pair per model, giving 280 rows for 56 pairs
+  across five models. It records the association slope, partial correlation,
+  confidence interval, raw p-value, FDR, direction, and sample count.
+
+- **Output:** `results/multiomics/paired_association/covariate_effects/mirna_mrna_association_model_comparison_wide.csv`<br>
+  ↳ Places the five model results beside one another for each of the 56 pairs.
+  It also flags which unadjusted raw-p findings no longer have raw p < 0.05
+  after treatment, sex-and-age, or full adjustment.
+
+- **Output:** `results/multiomics/paired_association/covariate_effects/mirna_mrna_association_model_comparison_summary.txt`<br>
+  ↳ Records the number of animals, raw-p findings, FDR findings, and
+  smallest-p pair for each model.
+
+- **Output directory:** `results/multiomics/paired_association/covariate_effects/figures/`<br>
+  ↳ Treatment-colored plots for the ten smallest unadjusted p-values,
+  the 13 inverse-DE pairs, and a direct comparison of unadjusted versus fully
+  adjusted p-values.
+
+:::
 
 Inspect and validate the saved model comparisons:
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: inspect-covariate-effects-on-associations
@@ -1740,6 +2361,9 @@ stopifnot(
 )
 ```
 
+
+:::
+
 **Expected outcome after comparing the five association models:** the
 unadjusted analysis has 32 pairs with raw p < 0.05. After treatment adjustment,
 only six retain raw p < 0.05 and none passes FDR < 0.10. Adjustment for sex
@@ -1754,8 +2378,11 @@ has statistically supported within-animal association after full adjustment.
 
 ### Build the integrated pair-evidence summary
 
+<span class="script-name">Multi-omics Script 10</span>:
+`scripts/multiomics/10_build_integrated_pair_evidence_summary.R`
+
 The DE results, target-database support, and association results are stored in
-separate files. Script 10 brings those existing results together so that each
+separate files. <span class="script-name">Script 10</span> brings those existing results together so that each
 of the 56 measured miRNA–mRNA pairs can be reviewed in one row.
 
 The script does not run another statistical test, calculate a combined score,
@@ -1779,30 +2406,42 @@ miRNA-mediated regulation.
 
 Run the integration-summary script from the repository root:
 
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show command {.unnumbered .unlisted}
+
 ```bash
 Rscript scripts/multiomics/10_build_integrated_pair_evidence_summary.R
 ```
 
-> **Script 10 outputs**
->
-> - `results/multiomics/integrated_pair_evidence/mirna_mrna_integrated_pair_evidence_summary.csv`
->   contains one row for each of the 56 pairs. It includes feature and gene
->   identifiers, miRNA and mRNA DE statistics, separate target-resource
->   evidence, the primary 43-animal association, the 27-animal MCAO-focused
->   result, the covariate-model comparisons, and the descriptive evidence
->   category.
->
-> - `results/multiomics/integrated_pair_evidence/mirna_mrna_directionally_compatible_unconfirmed_pairs.csv`
->   contains only pairs with inverse DE directions and a negative fully
->   adjusted association slope whose association does not pass FDR < 0.10.
->   This is a review list, not a list of statistically confirmed regulatory
->   relationships.
->
-> - `results/multiomics/integrated_pair_evidence/mirna_mrna_integrated_pair_evidence_summary.txt`
->   records pair, miRNA, gene, direction, association, target-source, and
->   evidence-category counts and states the interpretation boundary.
+
+:::
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Multi-omics <span class="script-name">Script 10</span> outputs {.unnumbered .unlisted}
+
+- **Output:** `results/multiomics/integrated_pair_evidence/mirna_mrna_integrated_pair_evidence_summary.csv`<br>
+  ↳ One row for each of the 56 pairs. It includes feature and gene
+  identifiers, miRNA and mRNA DE statistics, separate target-resource
+  evidence, the primary 43-animal association, the 27-animal MCAO-focused
+  result, the covariate-model comparisons, and the descriptive evidence
+  category.
+
+- **Output:** `results/multiomics/integrated_pair_evidence/mirna_mrna_directionally_compatible_unconfirmed_pairs.csv`<br>
+  ↳ Only pairs with inverse DE directions and a negative fully
+  adjusted association slope whose association does not pass FDR < 0.10.
+  This is a review list, not a list of statistically confirmed regulatory
+  relationships.
+
+- **Output:** `results/multiomics/integrated_pair_evidence/mirna_mrna_integrated_pair_evidence_summary.txt`<br>
+  ↳ Records pair, miRNA, gene, direction, association, target-source, and
+  evidence-category counts and states the interpretation boundary.
+
+:::
 
 Inspect and validate the integrated evidence:
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: inspect-integrated-pair-evidence
@@ -1861,7 +2500,10 @@ stopifnot(
 )
 ```
 
-**Expected outcome after running Script 10 on the 56 selected pairs:** 13
+
+:::
+
+**Expected outcome after running <span class="script-name">Script 10</span> on the 56 selected pairs:** 13
 pairs have inverse DE directions. Ten of those also have a negative fully
 adjusted association slope and are labeled directionally compatible but
 unconfirmed; six have miRTarBase-only support and four have
@@ -1873,6 +2515,9 @@ a statistically supported regulatory pattern.
 
 ### Prepare enrichment inputs
 
+<span class="script-name">Multi-omics Script 11</span>:
+`scripts/multiomics/11_prepare_enrichment_inputs.R`
+
 GSEA and over-representation analysis answer different questions. GSEA uses
 the complete ranked mRNA result and asks whether genes from a pathway tend to
 occur toward the increased or decreased end of that ranking. It does not
@@ -1880,7 +2525,7 @@ require a DE cutoff. Over-representation analysis starts with a selected gene
 list and asks whether particular pathways occur more often than expected
 relative to a defined background.
 
-Script 11 prepares the inputs without running an enrichment test. The planned
+<span class="script-name">Script 11</span> prepares the inputs without running an enrichment test. The planned
 analysis hierarchy is:
 
 1. **Primary pathway analysis — full-ranked GSEA.** Conventional mRNA GSEA
@@ -1911,7 +2556,7 @@ without presenting unstable pathway findings.
 
 The mRNA DE files contain 20,222 uniquely mapped transcript clusters but
 20,082 unique Entrez genes. GSEA requires one ranking value per gene. For the
-85 Entrez genes represented by more than one transcript cluster, Script 11
+85 Entrez genes represented by more than one transcript cluster, <span class="script-name">Script 11</span>
 selects the feature with the highest average expression and uses the
 transcript-cluster ID to resolve an exact tie. This selection is made once
 without using a contrast-specific t-statistic or p-value, so it cannot favor a
@@ -1923,49 +2568,65 @@ gene, and selection rule, so every chosen representative remains traceable.
 
 Run the enrichment-input script from the repository root:
 
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show command {.unnumbered .unlisted}
+
 ```bash
 Rscript scripts/multiomics/11_prepare_enrichment_inputs.R
 ```
 
-> **Script 11 outputs**
->
-> - `results/multiomics/enrichment_inputs/gsea/` contains an annotated CSV
->   and a two-column Entrez-ID `.rnk` file for each of the three contrasts.
->   Every file contains 20,082 unique genes ranked from the largest to the
->   smallest moderated t-statistic.
->
-> - `results/multiomics/enrichment_inputs/ora/` contains only
->   `formal_ora_selected_53_target_linked_genes.csv`. This is the sole formal
->   multi-omics ORA list. Repeated miRNA links to the same gene are summarized
->   rather than counted as separate genes.
->
-> - `results/multiomics/enrichment_inputs/descriptive_review_lists/` contains
->   the 12-gene inverse-DE list, the 9-gene directionally compatible but
->   unconfirmed list, and a README explaining why these small lists are for
->   descriptive annotation only and are not formal ORA inputs.
->
-> - `results/multiomics/enrichment_inputs/backgrounds/` contains the
->   following progressively narrower, numbered backgrounds:
->
->   1. `01_all_measured_mrna_genes.csv`: all 20,082 unique measured mRNA
->      genes, with one selected transcript cluster per Entrez gene.
->   2. `02_all_measured_mirna_target_genes.csv`: the 12,742 measured genes
->      linked to at least one measured miRNA through miRTarBase and/or
->      TargetScanMouse.
->   3. `03_candidate_mirna_target_gene_background.csv`: the 1,106 measured
->      genes targeted by at least one of the six miRNAs selected by Script 10.
->      This is the statistical background for formal ORA of the 53-gene list.
->
-> - `results/multiomics/enrichment_inputs/mirna_target_gene_sets/` contains
->   1,159 unique measured miRNA–gene links, a target-set size summary, and an
->   Entrez-ID `.gmt` file containing one gene set for each of the six selected
->   miRNAs.
->
-> - `results/multiomics/enrichment_inputs/enrichment_input_summary.txt`
->   records all feature-selection, ranking, background, selected-list, and
->   target-set counts and states that no enrichment test has yet been run.
+
+:::
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Multi-omics <span class="script-name">Script 11</span> outputs {.unnumbered .unlisted}
+
+- **Output directory:** `results/multiomics/enrichment_inputs/gsea/`<br>
+  ↳ An annotated CSV and a two-column Entrez-ID `.rnk` file for each of the
+  three contrasts.
+  Every file contains 20,082 unique genes ranked from the largest to the
+  smallest moderated t-statistic.
+
+- **Output directory:** `results/multiomics/enrichment_inputs/ora/`<br>
+  ↳ Contains only `formal_ora_selected_53_target_linked_genes.csv`. This is
+  the sole formal
+  multi-omics ORA list. Repeated miRNA links to the same gene are summarized
+  rather than counted as separate genes.
+
+- **Output directory:** `results/multiomics/enrichment_inputs/descriptive_review_lists/`<br>
+  ↳ The 12-gene inverse-DE list, the 9-gene directionally compatible but
+  unconfirmed list, and a README explaining why these small lists are for
+  descriptive annotation only and are not formal ORA inputs.
+
+- **Output directory:** `results/multiomics/enrichment_inputs/backgrounds/`<br>
+  ↳ The following progressively narrower, numbered backgrounds:
+
+  1. **Output:** `01_all_measured_mrna_genes.csv`<br>
+     ↳ All 20,082 unique measured mRNA genes, with one selected transcript
+     cluster per Entrez gene.
+  2. **Output:** `02_all_measured_mirna_target_genes.csv`<br>
+     ↳ The 12,742 measured genes linked to at least one measured miRNA
+     through miRTarBase and/or TargetScanMouse.
+  3. **Output:** `03_candidate_mirna_target_gene_background.csv`<br>
+     ↳ The 1,106 measured genes targeted by at least one of the six miRNAs
+     selected by <span class="script-name">Script 10</span>. This is the statistical background for formal
+     ORA of the 53-gene list.
+
+- **Output directory:** `results/multiomics/enrichment_inputs/mirna_target_gene_sets/`<br>
+  ↳ 1,159 unique measured miRNA–gene links, a target-set size summary, and an
+  Entrez-ID `.gmt` file containing one gene set for each of the six selected
+  miRNAs.
+
+- **Output:** `results/multiomics/enrichment_inputs/enrichment_input_summary.txt`<br>
+  ↳ Records all feature-selection, ranking, background, selected-list, and
+  target-set counts and states that no enrichment test has yet been run.
+
+:::
 
 Inspect and validate the enrichment inputs:
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: inspect-enrichment-inputs
@@ -2089,7 +2750,10 @@ stopifnot(
 )
 ```
 
-**Expected outcome after running Script 11:** each of the three mRNA
+
+:::
+
+**Expected outcome after running <span class="script-name">Script 11</span>:** each of the three mRNA
 contrasts has a complete 20,082-gene GSEA ranking. The gene-level selection
 selection rule documented above resolves 85 genes represented by multiple
 transcript clusters and excludes 140 lower-expression or later tied
@@ -2104,7 +2768,10 @@ conclusions; they are validated inputs for the next testing step.
 
 ### Run mRNA GSEA
 
-Script 12 performs GSEA only. It does not use the 53-gene ORA list or its
+<span class="script-name">Multi-omics Script 12</span>:
+`scripts/multiomics/12_run_mrna_gsea.R`
+
+<span class="script-name">Script 12</span> performs GSEA only. It does not use the 53-gene ORA list or its
 1,106-gene background, and it does not run an ORA test. For each of the three
 contrasts, it uses the complete list of 20,082 measured mRNA genes ranked by
 the moderated t-statistic from the `treatment + sex + age` limma model. This
@@ -2122,10 +2789,15 @@ collections are tested:
   curated pathway databases. It gives broader coverage but contains many
   biologically overlapping gene sets.
 
-The Entrez-ID GMT files are stored locally under
-`resources/pathway_gene_sets/msigdb_2025.1.Mm/`. Their release, source URLs,
-download date, and SHA-256 checksums are recorded in `SOURCE_METADATA.md`.
-Script 12 checks the file checksums before testing, which prevents an
+The pathway resources are recorded as:
+
+- **Input directory:** `resources/pathway_gene_sets/msigdb_2025.1.Mm/`<br>
+  ↳ Entrez-ID GMT files used for GSEA and ORA.
+
+- **Source metadata:** `SOURCE_METADATA.md`<br>
+  ↳ Records the release, source URLs, download date, and SHA-256 checksums.
+
+<span class="script-name">Script 12</span> checks the file checksums before testing, which prevents an
 unnoticed pathway-file change from altering the results.
 
 GSEA is run with `fgsea::fgseaMultilevel`. A pathway is tested only when
@@ -2135,7 +2807,7 @@ performed within each of the six contrast-by-collection analyses. The
 significance threshold is FDR < 0.05.
 
 Each ranking contains five exact t-statistic tie groups involving ten genes.
-Script 12 preserves the deterministic rank order created by Script 11 and
+<span class="script-name">Script 12</span> preserves the deterministic rank order created by <span class="script-name">Script 11</span> and
 applies a minute numerical decrement only within each tie. The largest
 adjustment is approximately \(3.1 \times 10^{-12}\), far smaller than a
 biologically meaningful t-statistic difference. This prevents arbitrary
@@ -2156,37 +2828,53 @@ that every gene in the pathway decreased.
 
 Run GSEA from the repository root:
 
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show command {.unnumbered .unlisted}
+
 ```bash
 Rscript scripts/multiomics/12_run_mrna_gsea.R
 ```
 
-> **Script 12 outputs**
->
-> - `contrast_results/` contains one complete GSEA result CSV for each
->   contrast. Each row reports the pathway, measured pathway size,
->   enrichment score, NES, p-value, FDR, direction, and leading-edge genes.
->
-> - `combined_gsea_results.csv` combines all tested pathways and contrasts
->   into one file.
->
-> - `significant_gsea_results_fdr_0.05.csv` contains the rows meeting
->   collection-specific FDR < 0.05.
->
-> - `leading_edge_genes.csv` expands the leading-edge genes from significant
->   pathways to one pathway–gene row at a time. A gene can occur repeatedly
->   because pathways overlap.
->
-> - `pathway_collection_summary.csv` records how many pathways were tested
->   and significant in each contrast and collection.
->
-> - `figures/gsea_pathway_summary.png` shows up to ten pathways with the
->   smallest FDR in each contrast and collection. Red indicates positive NES;
->   blue indicates negative NES.
->
-> - `gsea_run_summary.txt` records the method, parameters, pathway release,
->   checksums, tie handling, package version, and result counts.
+
+:::
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Multi-omics <span class="script-name">Script 12</span> outputs {.unnumbered .unlisted}
+
+- **Output directory:** `contrast_results/`<br>
+  ↳ One complete GSEA result CSV for each contrast. Each row reports the
+  pathway, measured pathway size,
+  enrichment score, NES, p-value, FDR, direction, and leading-edge genes.
+
+- **Output:** `combined_gsea_results.csv`<br>
+  ↳ Combines all tested pathways and contrasts into one file.
+
+- **Output:** `significant_gsea_results_fdr_0.05.csv`<br>
+  ↳ Contains the rows meeting collection-specific FDR < 0.05.
+
+- **Output:** `leading_edge_genes.csv`<br>
+  ↳ Expands the leading-edge genes from significant pathways to one
+  pathway–gene row at a time. A gene can occur repeatedly
+  because pathways overlap.
+
+- **Output:** `pathway_collection_summary.csv`<br>
+  ↳ Records how many pathways were tested and significant in each contrast
+  and collection.
+
+- **Output:** `figures/gsea_pathway_summary.png`<br>
+  ↳ Shows up to ten pathways with the smallest FDR in each contrast and
+  collection. Red indicates positive NES; blue indicates negative NES.
+
+- **Output:** `gsea_run_summary.txt`<br>
+  ↳ Records the method, parameters, pathway release, checksums, tie
+  handling, package version, and result counts.
+
+:::
 
 Inspect and validate the GSEA results:
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: inspect-mrna-gsea-results
@@ -2237,6 +2925,9 @@ knitr::include_graphics(
 )
 ```
 
+
+:::
+
 > **Observed GSEA result counts**
 >
 > - `MCAO1hr_vs_Sham`: 39 of 50 Hallmark sets and 497 of 1,041 tested
@@ -2249,7 +2940,7 @@ knitr::include_graphics(
 
 The 1,474 significant rows are not 1,474 independent biological discoveries.
 Many canonical pathways share genes or describe different levels of the same
-process, and the same pathway can appear in more than one contrast. Script 13
+process, and the same pathway can appear in more than one contrast. <span class="script-name">Script 13</span>
 therefore organizes dependent pathways, inspects their leading-edge genes, and
 compares their directions across contrasts. These are mRNA pathway results
 only; they do not by themselves demonstrate miRNA regulation, causality, or
@@ -2257,7 +2948,10 @@ mediation.
 
 ### Summarize and reduce GSEA redundancy
 
-Script 13 summarizes the significant results from Script 12 without rerunning
+<span class="script-name">Multi-omics Script 13</span>:
+`scripts/multiomics/13_summarize_mrna_gsea_results.R`
+
+<span class="script-name">Script 13</span> summarizes the significant results from <span class="script-name">Script 12</span> without rerunning
 GSEA and without performing ORA. It uses `fgsea::collapsePathways()` separately
 within each contrast and MSigDB collection. This method asks whether a
 significant pathway provides enrichment information that is sufficiently
@@ -2270,14 +2964,14 @@ based only on similar pathway names. The dependency p-value threshold is 0.05,
 200 permutations are used, and a fixed random seed makes the mapping
 reproducible. The original GSEA p-values, FDR values, and NES values are not
 recalculated or replaced. Hallmark and canonical pathways also remain
-separate because Script 12 treated them as separate FDR families.
+separate because <span class="script-name">Script 12</span> treated them as separate FDR families.
 
 A **representative pathway** is a concise label for a group of statistically
 dependent results. It should not be read as proof that only the process named
 by that representative is active. The accompanying redundancy map must be
 used to see every significant pathway assigned to it.
 
-Script 13 also summarizes the **leading-edge genes**. These are the genes that
+<span class="script-name">Script 13</span> also summarizes the **leading-edge genes**. These are the genes that
 contribute most strongly to a pathway's enrichment signal. A gene that appears
 in the leading edges of several representative pathways may help explain a
 shared expression pattern, but repeated occurrence does not prove that the
@@ -2285,48 +2979,69 @@ gene regulates those pathways.
 
 Run the GSEA-summary script from the repository root:
 
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show command {.unnumbered .unlisted}
+
 ```bash
 Rscript scripts/multiomics/13_summarize_mrna_gsea_results.R
 ```
 
-> **Script 13 outputs**
->
-> - `representative_pathways.csv` contains one row for each retained
->   representative in each contrast and collection, together with its NES,
->   FDR, direction, group size, and assigned pathway members.
->
-> - `pathway_redundancy_map.csv` preserves all 1,474 significant pathway rows
->   and records whether each pathway is a representative or which
->   representative it was assigned to.
->
-> - `representative_leading_edge_genes.csv` expands the leading edges of the
->   representative pathways to one pathway–gene row at a time.
->
-> - `leading_edge_driver_gene_summary.csv` counts how many representative
->   pathway leading edges contain each gene. These counts are prioritization
->   aids, not new gene-level significance tests.
->
-> - `cross_contrast_representative_pathways.csv` places NES, FDR,
->   significance, and representative status for all three contrasts side by
->   side. It identifies pathways with the same direction or a direction
->   reversal across significant contrasts.
->
-> - `redundancy_reduction_summary.csv` records the number and direction of
->   significant and representative pathways for each contrast and
->   collection.
->
-> - `figures/representative_pathway_summary.png` shows up to eight
->   representatives with the smallest FDR in each contrast and collection.
->
-> - `figures/cross_contrast_pathway_heatmap.png` compares NES values for 36
->   shared representatives. Faded cells are not significant at FDR < 0.05,
->   and asterisks identify contrasts in which the pathway was retained as a
->   representative.
->
-> - `gsea_redundancy_summary.txt` records the method, parameters, reduction
->   counts, output locations, and interpretation boundaries.
+
+:::
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Multi-omics <span class="script-name">Script 13</span> outputs {.unnumbered .unlisted}
+
+- **Output:** `representative_pathways.csv`<br>
+  ↳ One row for each retained representative in each contrast and
+  collection, together with its NES,
+  FDR, direction, group size, and assigned pathway members.
+
+- **Output:** `pathway_redundancy_map.csv`<br>
+  ↳ Preserves all 1,474 significant pathway rows and records whether each
+  pathway is a representative or which
+  representative it was assigned to.
+
+- **Output:** `representative_leading_edge_genes.csv`<br>
+  ↳ Expands the leading edges of the representative pathways to one
+  pathway–gene row at a time.
+
+- **Output:** `leading_edge_driver_gene_summary.csv`<br>
+  ↳ Counts how many representative pathway leading edges contain each gene.
+  These counts are prioritization
+  aids, not new gene-level significance tests.
+
+- **Output:** `cross_contrast_representative_pathways.csv`<br>
+  ↳ Places NES, FDR, significance, and representative status for all three
+  contrasts side by
+  side. It identifies pathways with the same direction or a direction
+  reversal across significant contrasts.
+
+- **Output:** `redundancy_reduction_summary.csv`<br>
+  ↳ Records the number and direction of significant and representative
+  pathways for each contrast and
+  collection.
+
+- **Output:** `figures/representative_pathway_summary.png`<br>
+  ↳ Shows up to eight representatives with the smallest FDR in each contrast
+  and collection.
+
+- **Output:** `figures/cross_contrast_pathway_heatmap.png`<br>
+  ↳ Compares NES values for 36 shared representatives. Faded cells are not
+  significant at FDR < 0.05,
+  and asterisks identify contrasts in which the pathway was retained as a
+  representative.
+
+- **Output:** `gsea_redundancy_summary.txt`<br>
+  ↳ Records the method, parameters, reduction counts, output locations, and
+  interpretation boundaries.
+
+:::
 
 Inspect and validate the redundancy-reduced results:
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: inspect-gsea-redundancy-results
@@ -2410,7 +3125,13 @@ stopifnot(
 )
 ```
 
+
+:::
+
 Display the redundancy-reduced representative-pathway figure:
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: display-representative-gsea-pathways
@@ -2427,7 +3148,13 @@ knitr::include_graphics(
 )
 ```
 
+
+:::
+
 Display the cross-contrast direction heatmap:
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: display-cross-contrast-gsea-heatmap
@@ -2443,6 +3170,9 @@ knitr::include_graphics(
   )
 )
 ```
+
+
+:::
 
 > **Observed redundancy-reduction results**
 >
@@ -2474,7 +3204,10 @@ regulation.
 
 ### Run formal multi-omics ORA
 
-Script 14 performs the formal ORA separately from GSEA. It asks whether the 53
+<span class="script-name">Multi-omics Script 14</span>:
+`scripts/multiomics/14_run_multiomics_ora.R`
+
+<span class="script-name">Script 14</span> performs the formal ORA separately from GSEA. It asks whether the 53
 selected genes occur in particular pathways more often than expected among
 the genes that could have entered the selected list.
 
@@ -2490,7 +3223,7 @@ using all 20,082 measured mRNA genes because genes without a target link to
 one of these six miRNAs could not have entered the 53-gene list under this
 selection design.
 
-For each pathway, Script 14 constructs four counts: selected genes inside the
+For each pathway, <span class="script-name">Script 14</span> constructs four counts: selected genes inside the
 pathway, selected genes outside the pathway, non-selected background genes
 inside the pathway, and non-selected background genes outside the pathway. A
 one-sided Fisher exact test then asks whether the proportion inside the
@@ -2506,45 +3239,62 @@ as formal evidence without FDR support.
 
 Run ORA from the repository root:
 
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show command {.unnumbered .unlisted}
+
 ```bash
 Rscript scripts/multiomics/14_run_multiomics_ora.R
 ```
 
-> **Script 14 outputs**
->
-> - `collection_results/mouse_hallmark_ora_results.csv` contains all eligible
->   Hallmark tests.
->
-> - `collection_results/mouse_canonical_pathways_ora_results.csv` contains
->   all eligible canonical-pathway tests.
->
-> - `combined_ora_results.csv` combines both collections. Each row includes
->   the selected and background pathway counts, fold enrichment, odds ratio,
->   raw p-value, FDR, and overlapping selected genes.
->
-> - `significant_ora_results_fdr_0.05.csv` contains only formally significant
->   pathways. It currently contains a header but no result rows because no
->   pathway met FDR < 0.05.
->
-> - `nominal_p_lt_0.05_ora_results.csv` retains the two raw-p-value findings
->   for exploratory review. They must not be described as statistically
->   significant ORA results.
->
-> - `pathway_selected_gene_overlaps.csv` expands each selected pathway–gene
->   overlap and retains the gene's selected miRNAs and mRNA DE statistics.
->
-> - `pathway_collection_summary.csv` records the source, eligible, nominal,
->   and FDR-significant pathway counts for each collection.
->
-> - `figures/ora_top_pathways.png` displays the ten pathways with the smallest
->   raw p-values per collection. Its subtitle explicitly states that none met
->   FDR < 0.05.
->
-> - `ora_run_summary.txt` records the selected list, background, method,
->   pathway-size rule, MSigDB version, checksums, thresholds, and result
->   counts.
+
+:::
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Multi-omics <span class="script-name">Script 14</span> outputs {.unnumbered .unlisted}
+
+- **Output:** `collection_results/mouse_hallmark_ora_results.csv`<br>
+  ↳ Contains all eligible Hallmark tests.
+
+- **Output:** `collection_results/mouse_canonical_pathways_ora_results.csv`<br>
+  ↳ Contains all eligible canonical-pathway tests.
+
+- **Output:** `combined_ora_results.csv`<br>
+  ↳ Combines both collections. Each row includes the selected and background
+  pathway counts, fold enrichment, odds ratio,
+  raw p-value, FDR, and overlapping selected genes.
+
+- **Output:** `significant_ora_results_fdr_0.05.csv`<br>
+  ↳ Contains only formally significant pathways. It currently contains a
+  header but no result rows because no
+  pathway met FDR < 0.05.
+
+- **Output:** `nominal_p_lt_0.05_ora_results.csv`<br>
+  ↳ Retains the two raw-p-value findings for exploratory review. They must
+  not be described as statistically
+  significant ORA results.
+
+- **Output:** `pathway_selected_gene_overlaps.csv`<br>
+  ↳ Expands each selected pathway–gene overlap and retains the gene's
+  selected miRNAs and mRNA DE statistics.
+
+- **Output:** `pathway_collection_summary.csv`<br>
+  ↳ Records the source, eligible, nominal, and FDR-significant pathway counts
+  for each collection.
+
+- **Output:** `figures/ora_top_pathways.png`<br>
+  ↳ Displays the ten pathways with the smallest raw p-values per collection.
+  Its subtitle explicitly states that none met FDR < 0.05.
+
+- **Output:** `ora_run_summary.txt`<br>
+  ↳ Records the selected list, background, method, pathway-size rule, MSigDB
+  version, checksums, thresholds, and result counts.
+
+:::
 
 Inspect and validate the formal ORA results:
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: inspect-formal-multiomics-ora
@@ -2604,7 +3354,13 @@ stopifnot(
 )
 ```
 
+
+:::
+
 Display the ORA summary figure:
+
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
 
 ```{r}
 #| label: display-formal-multiomics-ora
@@ -2620,6 +3376,9 @@ knitr::include_graphics(
   )
 )
 ```
+
+
+:::
 
 > **Observed formal ORA results**
 >
@@ -2652,11 +3411,17 @@ The final chunk records the R version, operating system, and loaded package
 versions used in the rendered workflow. This information helps reproduce the
 analysis and diagnose future package-version differences.
 
+::: {.callout-note collapse="true" appearance="minimal"}
+### Show code and output {.unnumbered .unlisted}
+
 ```{r}
 #| label: session-information
 
 sessionInfo()
 ```
+
+
+:::
 
 **Expected outcome:** a compact record of the active R session and package
 versions. This step reads the environment only and does not alter data or
