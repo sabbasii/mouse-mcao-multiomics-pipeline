@@ -41,7 +41,7 @@ The complete step-by-step workflow is documented in:
 
 [notebooks/microarray_analysis_pipeline.qmd](notebooks/microarray_analysis_pipeline.qmd)
 
-View the rendered workflow on [GitHub Pages](https://sabbasii.github.io/mirna-microarray-pipeline/microarray_analysis_pipeline.html).
+View the rendered workflow on [GitHub Pages](https://sabbasii.github.io/mouse-mcao-multiomics-pipeline/microarray_analysis_pipeline.html).
 
 Render it with:
 
