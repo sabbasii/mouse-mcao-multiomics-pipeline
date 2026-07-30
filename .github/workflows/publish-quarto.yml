@@ -29,6 +29,11 @@ jobs:
         with:
           r-version: release
 
+      - name: Install Quarto R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: any::knitr any::rmarkdown
+
       - name: Render public workflow
         run: quarto render notebooks/microarray_analysis_pipeline.qmd --output-dir _site
 
