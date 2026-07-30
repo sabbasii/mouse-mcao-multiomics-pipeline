@@ -63,11 +63,10 @@ scripts/
 └── neutrophil_analysis/   Focused neutrophil-marker analyses
 
 notebooks/                 Public Quarto workflow and supporting images
-metadata/                  Sample metadata and pairing information
+metadata/                  Placeholder only; local metadata files are not tracked
 resources/                 Downloaded/local annotation and pathway resources
 data/                      Local raw and processed array data (not tracked)
 results/                   Local generated outputs (not tracked)
-archive/                   Historical project materials
 ```
 
 ## Analysis sequence
