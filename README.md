@@ -37,8 +37,8 @@ establish direct regulation, causality, mediation, or cell abundance.
 
 ## Public workflow
 
-The complete step-by-step workflow is documented in the [rendered HTML
-workflow](https://sabbasii.github.io/mouse-mcao-multiomics-pipeline/microarray_analysis_pipeline.html).
+The complete step-by-step workflow is documented in the [Microarray Analysis
+Pipeline](https://sabbasii.github.io/mouse-mcao-multiomics-pipeline/microarray_analysis_pipeline.html).
 
 ## Repository structure
 
