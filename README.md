@@ -37,20 +37,8 @@ establish direct regulation, causality, mediation, or cell abundance.
 
 ## Public workflow
 
-The complete step-by-step workflow is documented in:
-
-[notebooks/microarray_analysis_pipeline.qmd](notebooks/microarray_analysis_pipeline.qmd)
-
-View the rendered workflow on [GitHub Pages](https://sabbasii.github.io/mouse-mcao-multiomics-pipeline/microarray_analysis_pipeline.html).
-
-Render it with:
-
-```bash
-quarto render notebooks/microarray_analysis_pipeline.qmd
-```
-
-Private manuscript-preparation files are kept under `notebooks/` locally but
-are excluded by the root `.gitignore`.
+The complete step-by-step workflow is documented in the [rendered HTML
+workflow](https://sabbasii.github.io/mouse-mcao-multiomics-pipeline/microarray_analysis_pipeline.html).
 
 ## Repository structure
 
